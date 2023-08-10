@@ -36,7 +36,7 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
 import com.gjglobal.daily_task_entry.presentation.utils.network.ConnectivityObserver
 import com.gjglobal.daily_task_entry.presentation.utils.network.NetworkConnectivityObserver
-import com.gjglobal.hms_gj.presentation.dashboard.more.MoreScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

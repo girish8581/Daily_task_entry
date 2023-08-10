@@ -1,4 +1,4 @@
-package com.gjglobal.hms_gj.presentation.dashboard.more
+package com.gjglobal.daily_task_entry.presentation.dashboard.more
 
 import android.app.Activity
 import androidx.compose.foundation.Image
