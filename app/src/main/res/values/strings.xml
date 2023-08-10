@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Daily_task_entry</string>
+    <string name="no_records_found_icon">no records found icon</string>
+    <string name="no_records_found_txt">No Records Found</string>
+</resources>
