@@ -65,7 +65,6 @@ import com.gjglobal.daily_task_entry.presentation.theme.BlueRms
 import com.gjglobal.daily_task_entry.presentation.theme.BlueWhite
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
-import com.gjglobal.daily_task_entry.presentation.theme.Pink80
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_11
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
@@ -74,7 +73,6 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_24
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_24
-import com.gjglobal.daily_task_entry.presentation.theme.appColor
 
 
 @SuppressLint("SuspiciousIndentation")
@@ -304,6 +302,7 @@ fun LoginScreen(
                                 activity.finish()
 
                                     //viewModel.login(state.userName, state.password,activity)
+
                             },
                             colors = ButtonDefaults.buttonColors(BlueRms),
                             modifier = Modifier

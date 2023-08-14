@@ -29,6 +29,9 @@ import androidx.navigation.compose.rememberNavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.presentation.components.NoInternetScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.HomeScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.leave.LeaveScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.tasklist.TaskListScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.notification.NotificationScreen
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DailyActivityApplicationTheme
@@ -36,7 +39,6 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
 import com.gjglobal.daily_task_entry.presentation.utils.network.ConnectivityObserver
 import com.gjglobal.daily_task_entry.presentation.utils.network.NetworkConnectivityObserver
-import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -51,7 +53,7 @@ open class DashboardActivity : ComponentActivity() {
         connectivityObserver = NetworkConnectivityObserver(applicationContext)
 
         setContent {
-            DailyActivityApplicationTheme() {
+            DailyActivityApplicationTheme {
                 val status by connectivityObserver.observe().collectAsState(
                     initial = ConnectivityObserver.Status.Available
                 )
@@ -128,6 +130,18 @@ fun Navigation(
             route = Screen.MoreScreen.route
         ) {
             MoreScreen(navController = navController,activity)
+        }
+
+        composable(
+            route = Screen.TaskListScreen.route
+        ) {
+            TaskListScreen(navController = navController,activity = activity, dashViewModel = viewModel)
+        }
+
+        composable(
+            route = Screen.LeaveScreen.route
+        ) {
+            LeaveScreen(navController = navController,activity = activity, dashViewModel = viewModel)
         }
 
     }
