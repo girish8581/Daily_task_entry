@@ -1,6 +1,13 @@
-package com.gjglobal.hms_gj.domain.domain.model.login
+package com.gjglobal.daily_task_entry.domain.domain.model.login
 
-data class Data(
-    val tokenDate: TokenDate,
-    val userDomain: Any
+data class LoginData(
+    val address: String,
+    val designation: String,
+    val id: String,
+    val mobile_number: String,
+    val password: String,
+    val qualification: String,
+    val staff_name: String,
+    val userType: String,
+    val username: String
 )

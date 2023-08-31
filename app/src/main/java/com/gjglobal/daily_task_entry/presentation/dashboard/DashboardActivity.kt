@@ -28,10 +28,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.presentation.components.NoInternetScreen
-import com.gjglobal.daily_task_entry.presentation.dashboard.home.HomeScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.HomeScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.leave.LeaveScreen
-import com.gjglobal.daily_task_entry.presentation.dashboard.home.tasklist.TaskListScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.taskview.TaskListViewScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.ReportScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.task.TaskScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.notification.NotificationScreen
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DailyActivityApplicationTheme
@@ -142,6 +146,36 @@ fun Navigation(
             route = Screen.LeaveScreen.route
         ) {
             LeaveScreen(navController = navController,activity = activity, dashViewModel = viewModel)
+        }
+
+        composable(
+            route = Screen.TaskListCompleteViewScreen.route
+        ) {
+            TaskListViewScreen(navController = navController,activity = activity, dashViewModel = viewModel, taskStatus = "COMPLETED")
+        }
+
+        composable(
+            route = Screen.TaskListToDoViewScreen.route
+        ) {
+            TaskListViewScreen(navController = navController,activity = activity, dashViewModel = viewModel, taskStatus = "TO DO")
+        }
+
+        composable(
+            route = Screen.TaskScreen.route
+        ) {
+            TaskScreen(navController = navController,activity = activity, dashViewModel = viewModel)
+        }
+
+        composable(
+            route = Screen.TaskAssignScreen.route
+        ) {
+            TaskAssignScreen(navController = navController,activity = activity, dashViewModel = viewModel)
+        }
+
+        composable(
+            route = Screen.ReportScreen.route
+        ) {
+            ReportScreen(navController = navController,activity = activity, dashViewModel = viewModel)
         }
 
     }

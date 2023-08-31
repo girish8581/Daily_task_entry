@@ -6,10 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
-import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
-import com.gjglobal.daily_task_entry.domain.domain.model.tasklist.TaskListItem
-import com.gjglobal.daily_task_entry.domain.domain.model.tasklist.TaskStatusRequest
-import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
+import com.gjglobal.daily_task_entry.domain.domain.model.leave.LeaveData
+import com.gjglobal.daily_task_entry.domain.domain.model.leave.LeaveListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.leave.LeaveSaveRequest
+import com.gjglobal.daily_task_entry.domain.domain.use_case.LeaveSaveUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,13 +23,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LeaveViewModel @Inject constructor(
-    private val taskListUseCase: TaskListUseCase,
+    private val leaveSaveUseCase: LeaveSaveUseCase,
 ) : ViewModel() {
 
     private val _state = mutableStateOf(LeaveState())
     val state: State<LeaveState> = _state
 
-    private val _leaveList = MutableStateFlow(listOf<TaskListItem>())
+    private val _leaveList = MutableStateFlow(listOf<LeaveData>())
     private var _searchText = MutableStateFlow("")
     var searchText = _searchText.asStateFlow()
 
@@ -49,8 +49,8 @@ class LeaveViewModel @Inject constructor(
             _leaveList.value
         )
 
-    fun getLeaveList(taskListRequest: TaskListRequest) {
-        taskListUseCase.getTaskList(taskListRequest = taskListRequest)
+    fun getLeaveList(leaveListRequest: LeaveListRequest) {
+        leaveSaveUseCase.getLeaveList(leaveListRequest = leaveListRequest)
             .onEach { result ->
                 when (result) {
                     is Resource.Success -> {
@@ -88,9 +88,9 @@ class LeaveViewModel @Inject constructor(
             }.launchIn(viewModelScope)
     }
 
-    fun saveLeaveStatus(taskStatusRequest: TaskStatusRequest,onSuccess: () -> Unit) {
-        taskListUseCase.saveTaskStatus(
-            taskStatusRequest
+    fun saveLeave(leaveSaveRequest: LeaveSaveRequest,onSuccess: () -> Unit) {
+        leaveSaveUseCase.saveLeave(
+            leaveSaveRequest = leaveSaveRequest
         ).onEach { result ->
             when (result) {
                 is Resource.Success -> {
@@ -104,11 +104,12 @@ class LeaveViewModel @Inject constructor(
                 }
 
                 is Resource.Error -> {
-                    Log.i("status error",result.data.toString())
+                    Log.i("status error",result.message.toString())
                     _state.value = _state.value.copy(
                         isLoading = false,
                         error = result.message ?: "An unexpected error occurred",
                     )
+
                 }
 
                 is Resource.Loading -> {

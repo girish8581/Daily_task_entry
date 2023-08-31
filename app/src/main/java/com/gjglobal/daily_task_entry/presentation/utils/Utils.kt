@@ -3,6 +3,7 @@ package com.gjglobal.daily_task_entry.presentation.utils
 import android.annotation.SuppressLint
 import android.content.*
 import java.io.File
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -31,7 +32,7 @@ fun currentTime(): String {
 
 @SuppressLint("SimpleDateFormat")
 fun currentTime24(): String {
-    val stf = SimpleDateFormat("hh:mm:ss", Locale.UK)
+    val stf = SimpleDateFormat("HH:mm:ss", Locale.UK)
     return stf.format(Date())
 }
 
@@ -62,4 +63,42 @@ private fun getSpace(firstStr: String, SecondStr: String): String {
         }
     }
     return sb.toString()
+}
+
+fun formatDate(date: String): String {
+    val possibleFormats = arrayOf("yyyy/MM/dd", "yyyy-MM-dd")
+    val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
+    for (format in possibleFormats) {
+        try {
+            val inputFormat = SimpleDateFormat(format, Locale.getDefault())
+            val parsedDate = inputFormat.parse(date)
+            if (parsedDate != null) {
+                return outputFormat.format(parsedDate)
+            }
+        } catch (e: ParseException) {
+            // Parsing failed, try the next format
+        }
+    }
+    // None of the formats matched, handle the error here (e.g., return an empty string)
+    return ""
+}
+
+fun formatDateApi(date: String): String {
+    val possibleFormats = arrayOf("dd-MM-yyyy", "dd/MM/yyyy")
+    val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+    for (format in possibleFormats) {
+        try {
+            val inputFormat = SimpleDateFormat(format, Locale.getDefault())
+            val parsedDate = inputFormat.parse(date)
+            if (parsedDate != null) {
+                return outputFormat.format(parsedDate)
+            }
+        } catch (e: ParseException) {
+            // Parsing failed, try the next format
+        }
+    }
+    // None of the formats matched, handle the error here (e.g., return an empty string)
+    return ""
 }

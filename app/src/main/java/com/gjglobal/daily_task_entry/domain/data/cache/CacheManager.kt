@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.gjglobal.daily_task_entry.core.Constants.KEY_AUTH
-import com.gjglobal.hms_gj.domain.domain.model.login.Authorization
+import com.gjglobal.daily_task_entry.domain.domain.model.login.Authorization
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 

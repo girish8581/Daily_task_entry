@@ -2,8 +2,10 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.home.components
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,6 +31,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,12 +52,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gjglobal.daily_task_entry.R
-import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
-import com.gjglobal.daily_task_entry.domain.domain.model.tasklist.TaskListItem
-import com.gjglobal.daily_task_entry.domain.domain.model.tasklist.TaskStatusRequest
-import com.gjglobal.daily_task_entry.presentation.dashboard.home.tasklist.TaskListViewModel
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
-import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
@@ -62,19 +64,25 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
 import com.gjglobal.daily_task_entry.presentation.theme.lightestBlue
+import com.gjglobal.daily_task_entry.presentation.utils.currentDate
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime24
+import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.util.Calendar
 import java.util.Date
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TaskCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     list: TaskListItem,
-    viewModel: TaskListViewModel
+    viewModel: TaskListViewModel,
+    buttonEnable:Boolean,
+    taskStatus:String,
+    onStatusUpdate: () -> Unit
 ) {
     val context = LocalContext.current
     val mContext = LocalContext.current
@@ -93,12 +101,11 @@ fun TaskCard(
     var clickAfterNoon by remember { mutableStateOf(false) }
     val dayType = remember { mutableStateOf("FullDay") }
     val sessionType = remember { mutableStateOf("nil") }
-    val leaveStatus = remember { mutableStateOf("nil") }
+    val leaveStatus = remember { mutableStateOf(0) }
     val leaveDetails = remember { mutableStateOf("nil") }
     val remarksAny = remember { mutableStateOf("nil") }
     val workAt = remember { mutableStateOf("Office") }
-    val jiraNo = remember { mutableStateOf("nil") }
-    var selectedDate: String
+    var selectedDate: String = ""
     var expandedStatus by remember { mutableStateOf(false) }
     var cardExpand by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("Select status") }
@@ -108,7 +115,7 @@ fun TaskCard(
     val focusManager = LocalFocusManager.current
 
     val listStatusItems =
-        ArrayList(listOf("TODO", "IN PROGRESS", "CODE REVIEW", "COMPLETED", "IN HOLD"))
+        ArrayList(listOf("IN PROGRESS","COMPLETED", "IN HOLD"))
 
 
     val pYear: Int
@@ -203,6 +210,7 @@ fun TaskCard(
                     horizontal = dimensionResource(id = R.dimen.dimen_20)
                 ),
             shape = RoundedCornerShape(dimensionResource(id = R.dimen.dimen_20)),
+            elevation = 5.dp
         ) {
             Column(
                 modifier = Modifier.background(lightestBlue)
@@ -258,7 +266,7 @@ fun TaskCard(
                         Text(
                             modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
                             textAlign = TextAlign.Start,
-                            text = list.assigned_date,
+                            text = formatDate(list.assigned_date),
                             style = TextStyle_400_14,
                         )
 
@@ -298,6 +306,23 @@ fun TaskCard(
 
                     }
 
+                    Row(
+                        modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = "Task time",
+                            style = TextStyle_400_14
+                        )
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = list.taskTime + " Hours",
+                            style = TextStyle_500_14
+                        )
+
+                    }
+
                     if (cardExpand) {
                         Spacer(modifier = Modifier.height(15.dp))
                         Row(
@@ -323,8 +348,8 @@ fun TaskCard(
                                         .width(100.dp)
                                         .height(30.dp)
                                 ) {
-                                    Text(text = selectedDate.ifEmpty {
-                                        currentDateApi()
+                                    Text(text = formatDate(selectedDate).ifEmpty {
+                                        currentDate()
                                     }, style = TextStyle_400_14, modifier = Modifier.padding(5.dp))
                                 }
 
@@ -399,6 +424,7 @@ fun TaskCard(
                                         clickCustom = false
                                         clickMorning = false
                                         clickAfterNoon = false
+
                                     }
                                     .width(82.dp), contentAlignment = Alignment.Center) {
                                     Text(
@@ -487,6 +513,7 @@ fun TaskCard(
                                             .clickable {
                                                 clickMorning = false
                                                 clickAfterNoon = true
+
                                             }
                                             .width(82.dp), contentAlignment = Alignment.Center) {
                                             Text(
@@ -665,7 +692,15 @@ fun TaskCard(
                             Box(
                                 modifier = Modifier
                                     .width(311.dp)
-                                    .background(LightBlue)
+                                    //.background(LightBlue)
+                                    .background(
+                                        Color.White,
+                                        shape = RoundedCornerShape(7.dp)
+                                    )
+                                    .border(
+                                        BorderStroke(1.dp, ColorPrimary),
+                                        shape = RoundedCornerShape(7.dp)
+                                    )
                             ) {
                                 Column(
                                     verticalArrangement = Arrangement.Center,
@@ -702,60 +737,125 @@ fun TaskCard(
 
                 }
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = dimensionResource(id = R.dimen.dimen_15))
-                            .background(ColorPrimary)
-                            .fillMaxWidth()
-                            .height(dimensionResource(id = R.dimen.dimen_50))
-                            .clickable {
-                                cardExpand = true
-                                if (textJobeDone != "" && startTime.value.isNotEmpty()) {
-
-                                    viewModel.saveTaskStatus(
-                                        taskStatusRequest = TaskStatusRequest(
-                                            assigned_date = list.assigned_date,
-                                            created_by = list.staff_id,
-                                            created_on = currentDateApi() + " " + currentTime24(),
-                                            date = currentDateApi(),
-                                            day_type = dayType.value,
-                                            end_time = endTime.value,
-                                            jira_no = list.task_jira_no,
-                                            job_done = textJobeDone,
-                                            leave_details = leaveDetails.value,
-                                            leave_status = leaveStatus.value,
-                                            project_name = list.project_name,
-                                            project_status = list.project_status,
-                                            remarks_any = remarksAny.value,
-                                            session_type = sessionType.value,
-                                            staff_name = list.staff_name,
-                                            start_time = startTime.value,
-                                            task_details = list.task_details,
-                                            task_no = list.task_name,
-                                            task_status = selectedStatus,
-                                            work_at = workAt.value,
-                                            id = list.id
-                                        ), onSuccess = {
-                                            onClick.invoke()
-                                            cardExpand = false
-                                        }
-                                    )
-                                }
-
-                            }, contentAlignment = Alignment.Center
+                if(taskStatus == "TO DO"){
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = "Update Status",
-                            style = TextStyle_500_14,
-                            color = Color.White,
-                            modifier = Modifier.padding(top = dimensionResource(id = R.dimen.dimen_3))
-                        )
+                        Box(
+                            modifier = Modifier
+                                .padding(top = dimensionResource(id = R.dimen.dimen_15))
+                                .background(ColorPrimary)
+                                .fillMaxWidth()
+                                .height(dimensionResource(id = R.dimen.dimen_50))
+                                .clickable {
+                                           viewModel.updateTaskStatus(
+                                               TaskUpdateRequest(
+                                                   task_status = "IN PROGRESS",
+                                                   updated_date = currentDateApi(),
+                                                   entry_date = currentDateApi(), task_name = list.task_name
+                                               ),id= list.id, onSuccess = {
+                                                   onStatusUpdate.invoke()
+                                               }
+                                           )
+                                }, contentAlignment = Alignment.Center
+                        ) {
+
+                            if (viewModel.state.value.isLoading.not()) {
+                                Text(
+                                    text = "Move to In Progress",
+                                    style = TextStyle_500_14,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(
+                                        top = dimensionResource(
+                                            id = R.dimen.dimen_3
+                                        )
+                                    )
+                                )
+                            }else {
+
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
+                            }
+                        }
                     }
                 }
+
+                if (buttonEnable){
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = dimensionResource(id = R.dimen.dimen_15))
+                                .background(ColorPrimary)
+                                .fillMaxWidth()
+                                .height(dimensionResource(id = R.dimen.dimen_50))
+                                .clickable {
+                                    cardExpand = true
+                                    if (textJobeDone != "" && startTime.value.isNotEmpty() && selectedStatus != "Select status") {
+
+                                        viewModel.saveTaskStatus(
+                                            taskStatusRequest = TaskStatusRequest(
+                                                assigned_date = list.assigned_date,
+                                                created_by = list.staff_id,
+                                                created_on = currentDateApi() + " " + currentTime24(),
+                                                date = selectedDate.toString(),
+                                                day_type = dayType.value,
+                                                end_time = endTime.value,
+                                                jira_no = list.task_jira_no,
+                                                job_done = textJobeDone,
+                                                leave_details = leaveDetails.value,
+                                                leave_status = leaveStatus.value,
+                                                project_name = list.project_name,
+                                                project_status = list.project_status,
+                                                remarks_any = remarksAny.value,
+                                                session_type = sessionType.value,
+                                                staff_name = list.staff_name,
+                                                start_time = startTime.value,
+                                                task_details = list.task_details,
+                                                task_no = list.task_name,
+                                                task_status = selectedStatus,
+                                                work_at = workAt.value,
+                                                id = list.id
+                                            ), onSuccess = {
+                                                viewModel.state.value.taskList = null
+                                                onClick.invoke()
+                                                cardExpand = false
+                                            }
+                                        )
+                                    }
+
+                                }, contentAlignment = Alignment.Center
+                        ) {
+
+                            if (viewModel.state.value.isLoading.not()) {
+                                Text(
+                                    text = "Update",
+                                    style = TextStyle_500_14,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(
+                                        top = dimensionResource(
+                                            id = R.dimen.dimen_3
+                                        )
+                                    )
+                                )
+                            }else {
+
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
             }
 
         }
