@@ -75,9 +75,9 @@ open class DashboardActivity : ComponentActivity() {
                                             icon = painterResource(id = R.drawable.home)
                                         ),
                                         BottomNavItem(
-                                            name = "Notification",
-                                            route = Screen.NotificationScreen.route,
-                                            icon = painterResource(id = R.drawable.notification)
+                                            name = "Report",
+                                            route = Screen.ReportScreen.route,
+                                            icon = painterResource(id = R.drawable.report)
                                         ),
                                         BottomNavItem(
                                             name = "More",

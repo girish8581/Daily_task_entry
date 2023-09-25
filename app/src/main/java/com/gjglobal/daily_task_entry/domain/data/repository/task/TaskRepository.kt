@@ -1,6 +1,7 @@
 package com.gjglobal.daily_task_entry.domain.data.repository.task
 
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.GetStaffResponse
@@ -15,6 +16,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
@@ -46,5 +48,7 @@ interface TaskRepository {
     suspend fun getRecentUpdates(recentUpdateRequest: RecentUpdateRequest):RecentUpdateResponse
 
     suspend fun getTasksCount(taskCountSummaryRequest: taskCountSummaryRequest):TaskSummaryCountResponse
+
+    suspend fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): StaffTaskDateWiseResponse
 
 }

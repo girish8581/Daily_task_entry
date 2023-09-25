@@ -5,6 +5,7 @@ import android.app.TimePickerDialog
 import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -92,14 +93,14 @@ fun TaskCard(
     val mMinute = mCalendar[Calendar.MINUTE]
 
     // Value for storing time as a string
-    val startTime = remember { mutableStateOf("09:30") }
-    val endTime = remember { mutableStateOf("18:00") }
-    var clickFullDay by remember { mutableStateOf(true) }
-    var clickHalfDay by remember { mutableStateOf(false) }
-    var clickCustom by remember { mutableStateOf(false) }
-    var clickMorning by remember { mutableStateOf(false) }
-    var clickAfterNoon by remember { mutableStateOf(false) }
-    val dayType = remember { mutableStateOf("FullDay") }
+    val startTime = remember { mutableStateOf("") }
+    val endTime = remember { mutableStateOf("") }
+    val clickFullDay by remember { mutableStateOf(false) }
+    val clickHalfDay by remember { mutableStateOf(false) }
+    val clickCustom by remember { mutableStateOf(true) }
+    val clickMorning by remember { mutableStateOf(false) }
+    val clickAfterNoon by remember { mutableStateOf(false) }
+    val dayType = remember { mutableStateOf("Hourly") }
     val sessionType = remember { mutableStateOf("nil") }
     val leaveStatus = remember { mutableStateOf(0) }
     val leaveDetails = remember { mutableStateOf("nil") }
@@ -107,8 +108,10 @@ fun TaskCard(
     val workAt = remember { mutableStateOf("Office") }
     var selectedDate: String = ""
     var expandedStatus by remember { mutableStateOf(false) }
+    var expandedLevel by remember { mutableStateOf(false) }
     var cardExpand by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("Select status") }
+    var selectedLevel by remember { mutableStateOf("Select level") }
     var textJobeDone by remember { mutableStateOf("") }
 
     val focusRequester = remember { FocusRequester() }
@@ -117,6 +120,8 @@ fun TaskCard(
     val listStatusItems =
         ArrayList(listOf("IN PROGRESS","COMPLETED", "IN HOLD"))
 
+    val listLevelItems =
+        ArrayList(listOf("10","20","30","40","50","60","70","80","90","100"))
 
     val pYear: Int
     val pMonth: Int
@@ -368,169 +373,169 @@ fun TaskCard(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "Selected Time : ${startTime.value}  ${endTime.value}",
-                                style = TextStyle_400_14,
-                            )
+//                            Text(
+//                                text = "Selected Time : ${startTime.value}  ${endTime.value}",
+//                                style = TextStyle_400_14,
+//                            )
 
-                            Text(
-                                text = "Working Hrs..",
-                                style = TextStyle_400_14,
-                                color = ColorPrimary
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Box(modifier = Modifier
-                                    .background(
-                                        if (clickFullDay) ColorPrimary else Color.White,
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .border(
-                                        BorderStroke(1.dp, ColorPrimary),
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .clickable {
-                                        clickFullDay = true
-                                        clickHalfDay = false
-                                        clickCustom = false
-                                        clickMorning = false
-                                        clickAfterNoon = false
+//                            Text(
+//                                text = "Working Hrs..",
+//                                style = TextStyle_400_14,
+//                                color = ColorPrimary
+//                            )
+//                            Row(
+//                                horizontalArrangement = Arrangement.Center
+//                            ) {
+//                                Box(modifier = Modifier
+//                                    .background(
+//                                        if (clickFullDay) ColorPrimary else Color.White,
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .border(
+//                                        BorderStroke(1.dp, ColorPrimary),
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .clickable {
+//                                        clickFullDay = true
+//                                        clickHalfDay = false
+//                                        clickCustom = false
+//                                        clickMorning = false
+//                                        clickAfterNoon = false
+//
+//                                    }
+//                                    .width(100.dp), contentAlignment = Alignment.Center) {
+//                                    Text(
+//                                        text = "Full day",
+//                                        style = TextStyle_500_12,
+//                                        color = if (clickFullDay) Color.White else ColorPrimary,
+//                                        modifier = Modifier.padding(vertical = 3.dp)
+//                                    )
+//                                }
+//
+//                                Spacer(modifier = Modifier.width(20.dp))
+//
+//                                Box(modifier = Modifier
+//                                    .background(
+//                                        if (clickHalfDay) ColorPrimary else Color.White,
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .border(
+//                                        BorderStroke(1.dp, ColorPrimary),
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .clickable {
+//                                        clickFullDay = false
+//                                        clickHalfDay = true
+//                                        clickCustom = false
+//                                        clickMorning = false
+//                                        clickAfterNoon = false
+//
+//                                    }
+//                                    .width(82.dp), contentAlignment = Alignment.Center) {
+//                                    Text(
+//                                        text = "Half day",
+//                                        style = TextStyle_400_12,
+//                                        color = if (clickHalfDay) Color.White else ColorPrimary,
+//                                        modifier = Modifier.padding(vertical = 3.dp)
+//                                    )
+//                                }
+//
+//                                Spacer(modifier = Modifier.width(20.dp))
+//
+//                                Box(modifier = Modifier
+//                                    .background(
+//                                        if (clickCustom) ColorPrimary else Color.White,
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .border(
+//                                        BorderStroke(1.dp, ColorPrimary),
+//                                        shape = RoundedCornerShape(7.dp)
+//                                    )
+//                                    .clickable {
+//                                        clickFullDay = false
+//                                        clickHalfDay = false
+//                                        clickCustom = true
+//                                        clickMorning = false
+//                                        clickAfterNoon = false
+//                                    }
+//                                    .width(82.dp), contentAlignment = Alignment.Center) {
+//                                    Text(
+//                                        text = "Custom",
+//                                        style = TextStyle_400_12,
+//                                        color = if (clickCustom) Color.White else ColorPrimary,
+//                                        modifier = Modifier.padding(vertical = 3.dp)
+//                                    )
+//                                }
+//                            }
+//
+//                            if (clickHalfDay) {
+//                                Column(
+//                                    verticalArrangement = Arrangement.Center,
+//                                    horizontalAlignment = Alignment.CenterHorizontally
+//                                ) {
+//                                    Text(
+//                                        text = "Select Session",
+//                                        style = TextStyle_400_14,
+//                                        color = ColorPrimary
+//                                    )
+//                                    Row(
+//                                        horizontalArrangement = Arrangement.Center
+//                                    ) {
+//                                        Box(modifier = Modifier
+//                                            .background(
+//                                                if (clickMorning) ColorPrimary else Color.White,
+//                                                shape = RoundedCornerShape(7.dp)
+//                                            )
+//                                            .border(
+//                                                BorderStroke(1.dp, ColorPrimary),
+//                                                shape = RoundedCornerShape(7.dp)
+//                                            )
+//                                            .clickable {
+//                                                clickMorning = true
+//                                                clickAfterNoon = false
+//
+//                                            }
+//                                            .width(100.dp), contentAlignment = Alignment.Center) {
+//                                            Text(
+//                                                text = "Morning",
+//                                                style = TextStyle_500_12,
+//                                                color = if (clickMorning) Color.White else ColorPrimary,
+//                                                modifier = Modifier.padding(vertical = 3.dp)
+//                                            )
+//                                        }
+//
+//                                        Spacer(modifier = Modifier.width(20.dp))
+//
+//                                        Box(modifier = Modifier
+//                                            .background(
+//                                                if (clickAfterNoon) ColorPrimary else Color.White,
+//                                                shape = RoundedCornerShape(7.dp)
+//                                            )
+//                                            .border(
+//                                                BorderStroke(1.dp, ColorPrimary),
+//                                                shape = RoundedCornerShape(7.dp)
+//                                            )
+//                                            .clickable {
+//                                                clickMorning = false
+//                                                clickAfterNoon = true
+//
+//                                            }
+//                                            .width(82.dp), contentAlignment = Alignment.Center) {
+//                                            Text(
+//                                                text = "After Noon",
+//                                                style = TextStyle_400_12,
+//                                                color = if (clickAfterNoon) Color.White else ColorPrimary,
+//                                                modifier = Modifier.padding(vertical = 3.dp)
+//                                            )
+//                                        }
+//                                    }
+//
+//                                    Spacer(modifier = Modifier.height(10.dp))
+//
+//                                }
+//                            }
 
-                                    }
-                                    .width(100.dp), contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "Full day",
-                                        style = TextStyle_500_12,
-                                        color = if (clickFullDay) Color.White else ColorPrimary,
-                                        modifier = Modifier.padding(vertical = 3.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(20.dp))
-
-                                Box(modifier = Modifier
-                                    .background(
-                                        if (clickHalfDay) ColorPrimary else Color.White,
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .border(
-                                        BorderStroke(1.dp, ColorPrimary),
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .clickable {
-                                        clickFullDay = false
-                                        clickHalfDay = true
-                                        clickCustom = false
-                                        clickMorning = false
-                                        clickAfterNoon = false
-
-                                    }
-                                    .width(82.dp), contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "Half day",
-                                        style = TextStyle_400_12,
-                                        color = if (clickHalfDay) Color.White else ColorPrimary,
-                                        modifier = Modifier.padding(vertical = 3.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(20.dp))
-
-                                Box(modifier = Modifier
-                                    .background(
-                                        if (clickCustom) ColorPrimary else Color.White,
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .border(
-                                        BorderStroke(1.dp, ColorPrimary),
-                                        shape = RoundedCornerShape(7.dp)
-                                    )
-                                    .clickable {
-                                        clickFullDay = false
-                                        clickHalfDay = false
-                                        clickCustom = true
-                                        clickMorning = false
-                                        clickAfterNoon = false
-                                    }
-                                    .width(82.dp), contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "Custom",
-                                        style = TextStyle_400_12,
-                                        color = if (clickCustom) Color.White else ColorPrimary,
-                                        modifier = Modifier.padding(vertical = 3.dp)
-                                    )
-                                }
-                            }
-
-                            if (clickHalfDay) {
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = "Select Session",
-                                        style = TextStyle_400_14,
-                                        color = ColorPrimary
-                                    )
-                                    Row(
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Box(modifier = Modifier
-                                            .background(
-                                                if (clickMorning) ColorPrimary else Color.White,
-                                                shape = RoundedCornerShape(7.dp)
-                                            )
-                                            .border(
-                                                BorderStroke(1.dp, ColorPrimary),
-                                                shape = RoundedCornerShape(7.dp)
-                                            )
-                                            .clickable {
-                                                clickMorning = true
-                                                clickAfterNoon = false
-
-                                            }
-                                            .width(100.dp), contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = "Morning",
-                                                style = TextStyle_500_12,
-                                                color = if (clickMorning) Color.White else ColorPrimary,
-                                                modifier = Modifier.padding(vertical = 3.dp)
-                                            )
-                                        }
-
-                                        Spacer(modifier = Modifier.width(20.dp))
-
-                                        Box(modifier = Modifier
-                                            .background(
-                                                if (clickAfterNoon) ColorPrimary else Color.White,
-                                                shape = RoundedCornerShape(7.dp)
-                                            )
-                                            .border(
-                                                BorderStroke(1.dp, ColorPrimary),
-                                                shape = RoundedCornerShape(7.dp)
-                                            )
-                                            .clickable {
-                                                clickMorning = false
-                                                clickAfterNoon = true
-
-                                            }
-                                            .width(82.dp), contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = "After Noon",
-                                                style = TextStyle_400_12,
-                                                color = if (clickAfterNoon) Color.White else ColorPrimary,
-                                                modifier = Modifier.padding(vertical = 3.dp)
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
+                            //Spacer(modifier = Modifier.height(10.dp))
 
                             if (clickCustom) {
                                 Row(
@@ -688,7 +693,78 @@ fun TaskCard(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_15)))
+                            if(selectedStatus=="IN PROGRESS") {
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select completed level in %",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(200.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedLevel,
+                                            onExpandedChange = {
+                                                expandedLevel = !expandedLevel
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedLevel,
+                                                onDismissRequest = { expandedLevel = false }) {
+                                                listLevelItems.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedLevel = selectedOption
+                                                        expandedLevel = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedLevel) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedLevel = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedLevel,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_10)))
                             Box(
                                 modifier = Modifier
                                     .width(311.dp)
@@ -797,7 +873,11 @@ fun TaskCard(
                                 .height(dimensionResource(id = R.dimen.dimen_50))
                                 .clickable {
                                     cardExpand = true
-                                    if (textJobeDone != "" && startTime.value.isNotEmpty() && selectedStatus != "Select status") {
+                                    if (textJobeDone != ""
+                                        && startTime.value.isNotEmpty()
+                                        && endTime.value.isNotEmpty()
+                                        && selectedStatus != "Select status"
+                                        && startTime.value != endTime.value) {
 
                                         viewModel.saveTaskStatus(
                                             taskStatusRequest = TaskStatusRequest(
@@ -821,13 +901,16 @@ fun TaskCard(
                                                 task_no = list.task_name,
                                                 task_status = selectedStatus,
                                                 work_at = workAt.value,
-                                                id = list.id
+                                                id = list.id,
+                                                completed_level = selectedLevel.toString()
                                             ), onSuccess = {
                                                 viewModel.state.value.taskList = null
                                                 onClick.invoke()
                                                 cardExpand = false
                                             }
                                         )
+                                    }else{
+                                        Toast.makeText(context,"Please fill data correctly",Toast.LENGTH_LONG).show()
                                     }
 
                                 }, contentAlignment = Alignment.Center
@@ -863,21 +946,39 @@ fun TaskCard(
 
     }
 
+    if(selectedStatus=="COMPLETED"){
+        selectedLevel = "100"
+    }
+
+    if(selectedStatus=="IN PROGRESS"){
+        selectedLevel = ""
+    }
+
     if (clickFullDay) {
         startTime.value = "09:30"
         endTime.value = "18:00"
+        dayType.value = "FullDay"
     }
     if (clickHalfDay) {
         startTime.value = ""
         endTime.value = ""
+        dayType.value = "HalfDay"
     }
     if (clickHalfDay && clickMorning) {
         startTime.value = "09:30"
         endTime.value = "13:00"
+        dayType.value = "HalfDay"
+        sessionType.value = "Morning"
+
     }
     if (clickHalfDay && clickAfterNoon) {
         startTime.value = "14:30"
         endTime.value = "18:00"
+        dayType.value = "HalfDay"
+        sessionType.value = "Afternoon"
+    }
+    if (clickCustom) {
+        dayType.value = "Hourly"
     }
 }
 

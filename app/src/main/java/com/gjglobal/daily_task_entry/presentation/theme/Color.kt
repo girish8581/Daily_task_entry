@@ -39,5 +39,6 @@ val todoColor = Color(0xFFF0BEBA)
 val inProgressColor = Color(0xFFEAEEC0)
 val doneColor = Color(0xFFC2F1C4)
 val blueVarient = Color(0xFF3E7F93)
-val DarkGreen = Color(0xFF2A852D)
+val DarkGreen = Color(0xFF1D5A1F)
+val DarkGreenColor = Color(0xFF138316)
 

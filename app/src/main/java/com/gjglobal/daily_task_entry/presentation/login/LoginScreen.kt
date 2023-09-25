@@ -218,7 +218,7 @@ fun LoginScreen(
                             textStyle = TextStyle_500_16,
                             visualTransformation = if (showPassword.value) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             maxLines = 1,
                             singleLine = true,
                             label = { Text(text = "Password") },

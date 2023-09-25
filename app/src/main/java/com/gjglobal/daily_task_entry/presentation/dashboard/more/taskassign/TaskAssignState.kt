@@ -3,6 +3,7 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.StaffData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterData
+import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.TaskDataDateWise
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDetails
 
 data class TaskAssignState(
@@ -16,6 +17,7 @@ data class TaskAssignState(
     var isStaffList :Boolean?=false,
     var isTaskList :Boolean?=false,
     var taskData:TaskDetails?=null,
+    var staffTaskDateWise: List<TaskDataDateWise>?=null,
     var isTaskData:Boolean?=false,
     var isTaskLoading:Boolean?=false,
     var taskTime:String? = null,

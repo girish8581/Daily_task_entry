@@ -602,7 +602,7 @@ fun TaskAssignScreen(
                                 },
                                 modifier = Modifier
                                     .width(150.dp)
-                                    .height(50.dp),
+                                    .height(40.dp),
                                 shape = RoundedCornerShape(8.dp),
                             ) {
 

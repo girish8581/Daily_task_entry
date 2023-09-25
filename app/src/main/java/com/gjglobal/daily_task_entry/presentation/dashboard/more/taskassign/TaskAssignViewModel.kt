@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectData
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -84,6 +85,44 @@ class TaskAssignViewModel @Inject constructor(
 
                     is Resource.Loading -> {
                         _state.value = _state.value.copy(isTaskLoading = true)
+                    }
+
+                    else -> {}
+                }
+            }.launchIn(viewModelScope)
+    }
+
+//    suspend fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): StaffTaskDateWiseResponse
+    fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest) {
+        taskListUseCase.getStaffTaskDateWise(staffTaskDateWiseRequest=staffTaskDateWiseRequest)
+            .onEach { result ->
+                when (result) {
+
+                    is Resource.Success -> {
+                        if (result.data.toString().isNotEmpty()) {
+                            _state.value = _state.value.copy(isTaskList = true)
+                            _state.value =
+                                _state.value.copy(isLoading = false, isTaskData = true, staffTaskDateWise = result.data?.data)
+
+                            Log.e("result", result.data.toString())
+                        } else {
+                            _state.value = _state.value.copy(
+                                isLoading = false,isTaskData = false
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(isTaskData = false)
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = result.message ?: "An unexpected error occurred"
+
+                        )
+                    }
+
+                    is Resource.Loading -> {
+                        _state.value = _state.value.copy(isLoading = true)
                     }
 
                     else -> {}

@@ -21,5 +21,6 @@ data class TaskStatusRequest(
     val task_no: String,
     val task_status: String,
     val work_at: String,
-    val id :String
+    val id :String,
+    val completed_level:String
 )

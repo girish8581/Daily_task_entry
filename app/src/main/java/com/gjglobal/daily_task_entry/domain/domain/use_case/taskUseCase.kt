@@ -4,6 +4,7 @@ import android.util.Log
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.data.repository.task.TaskRepository
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.GetStaffResponse
@@ -18,6 +19,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
@@ -82,6 +84,21 @@ class TaskListUseCase @Inject constructor(
             try {
                 emit(Resource.Loading())
                 val apiResponse = repository.getTaskData(taskName=taskName)
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+    fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): Flow<Resource<StaffTaskDateWiseResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getStaffTaskDateWise(staffTaskDateWiseRequest= staffTaskDateWiseRequest)
                 emit(Resource.Success(apiResponse))
             } catch (e: HttpException) {
                 emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))

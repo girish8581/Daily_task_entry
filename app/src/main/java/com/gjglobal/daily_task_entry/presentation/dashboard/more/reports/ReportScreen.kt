@@ -1,7 +1,8 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.more.reports
 
 import android.app.Activity
-import androidx.compose.foundation.Image
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,17 +21,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -41,16 +47,21 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.Recen
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.components.ToolBar
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.FormatTime
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.components.EmployeeWiseReport
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.task.TaskViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
+import com.gjglobal.daily_task_entry.presentation.theme.DarkGreen
+import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
-import com.gjglobal.daily_task_entry.presentation.theme.doneColor
-import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
 import com.gjglobal.daily_task_entry.presentation.theme.todoColor
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReportScreen(
     navController: NavController,
@@ -61,14 +72,19 @@ fun ReportScreen(
 ) {
     val context = LocalContext.current
     val cacheManager = CacheManager(context)
+    val taskViewModel : TaskAssignViewModel = hiltViewModel()
+    val taskState = taskViewModel.state.value
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
     val staffName = userData?.staff_name
     val state = viewModel.state.value
+    var showEmpReport by remember { mutableStateOf(false) }
+    val userRole = userData?.userType
 
     OnLifeCycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
-                dashViewModel.hideBottomMenu(true)
+                dashViewModel.hideBottomMenu(false)
+                taskViewModel.getStaffs()
                 viewModel.getReports(
                     RecentUpdateRequest(
                         staff_name = staffName!!,
@@ -96,7 +112,36 @@ fun ReportScreen(
             ToolBar(nameOfScreen = "Reports", iconOfScreen = 0, onClick = {
                 navController.popBackStack()
             }, onIconClick = {})
-            Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 5.dp
+                        )
+                        .fillMaxWidth()
+                ) {
+                    Text(text = "Employee wise report -->", style = TextStyle_600_14, color = ColorPrimary)
+                    FloatingActionButton(
+                        onClick = {
+                            showEmpReport= true
+                            println( showEmpReport)
+                            // Handle FAB click
+                            // Add your FAB action here
+                        },
+                        modifier = Modifier.padding(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = ColorPrimary
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+
 
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center) {
@@ -126,8 +171,15 @@ fun ReportScreen(
             }
         }
     }
+
+    if(showEmpReport){
+        EmployeeWiseReport {
+            showEmpReport= false
+        }
+    }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReportList(viewModel: ReportViewModel) {
     val leaveList1 by viewModel.recentUpdatesList.collectAsState()
@@ -137,14 +189,9 @@ fun ReportList(viewModel: ReportViewModel) {
             modifier = Modifier.padding()
         ) {
             Column() {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(horizontal = 30.dp, vertical = 5.dp)
-                ) {
-                    Text(text = "Task wise report", style = TextStyle_600_14, color = ColorPrimary)
-                }
+
                 Spacer(modifier = Modifier.height(5.dp))
-                LazyColumn(modifier = Modifier.height(600.dp)) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(leaveList1) { item ->
                         Box(
                             modifier = Modifier
@@ -165,23 +212,25 @@ fun ReportList(viewModel: ReportViewModel) {
 
                                     Column(
 //                                        modifier = Modifier
-//                                            .background(color = Color.White)
-                                        modifier = Modifier.background(if(item.leave_status == "0")
-                                        {
-                                            Color.White
-                                        }
-                                        else {
-                                            todoColor
-                                        })
+//                                        .background(color = Color.White)
+                                        modifier = Modifier
+                                            .background(
+                                                if (item.leave_status == "0") {
+                                                    Color.White
+                                                } else {
+                                                    todoColor
+                                                }
+                                            )
                                             .padding(10.dp),
                                         verticalArrangement = Arrangement.Center
                                     ) {
                                         if (item.leave_status == "0") {
                                             Row(
                                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                                modifier = Modifier.padding(
-                                                    horizontal = 10.dp
-                                                )
+                                                modifier = Modifier
+                                                    .padding(
+                                                        horizontal = 10.dp
+                                                    )
                                                     .fillMaxWidth()
                                             ) {
                                                 Text(
@@ -244,6 +293,51 @@ fun ReportList(viewModel: ReportViewModel) {
                                                 )
                                             ) {
                                                 Text(
+                                                    text = "Time Taken",
+                                                    style = TextStyle_600_12,
+                                                    color = ColorPrimary,
+                                                    modifier = Modifier.width(100.dp)
+                                                )
+                                                //Spacer(modifier = Modifier.width(30.dp))
+                                                val startTime = FormatTime(item.start_time!!)
+                                                val endTime = FormatTime(item.end_time!!)
+                                                Text(
+                                                    text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+item.timeTaken!!.toDouble()/60+" Hrs"}else{""},
+                                                    style = TextStyle_500_12,
+                                                    color = ColorPrimary
+                                                )
+                                            }
+
+                                            Row(
+                                                horizontalArrangement = Arrangement.Center,
+                                                modifier = Modifier.padding(
+                                                    horizontal = 10.dp,
+                                                )
+                                            ) {
+                                                Text(
+                                                    text = "Level",
+                                                    style = TextStyle_600_12,
+                                                    color = ColorPrimary,
+                                                    modifier = Modifier.width(100.dp)
+                                                )
+
+                                                Text(
+                                                    text = item.completed_level!!+ " % done",
+                                                    style = TextStyle_500_12,
+                                                    color = if(item.task_status=="IN PROGRESS"){
+                                                        Color.Red}else{
+                                                        DarkGreenColor}
+                                                )
+                                            }
+
+
+                                            Row(
+                                                horizontalArrangement = Arrangement.Center,
+                                                modifier = Modifier.padding(
+                                                    horizontal = 10.dp,
+                                                )
+                                            ) {
+                                                Text(
                                                     text = "Job Done",
                                                     style = TextStyle_600_12,
                                                     color = ColorPrimary,
@@ -253,7 +347,7 @@ fun ReportList(viewModel: ReportViewModel) {
                                                 Text(
                                                     text = item.job_done!!,
                                                     style = TextStyle_500_12,
-                                                    color = ColorPrimary
+                                                    color = DarkGreen
                                                 )
                                             }
 
@@ -273,7 +367,7 @@ fun ReportList(viewModel: ReportViewModel) {
                                                 Text(
                                                     text = item.task_status!!,
                                                     style = TextStyle_500_12,
-                                                    color = ColorPrimary
+                                                    color = if (item.task_status =="COMPLETED"){ColorPrimary}else{Color.Red}
                                                 )
                                             }
                                         } else{

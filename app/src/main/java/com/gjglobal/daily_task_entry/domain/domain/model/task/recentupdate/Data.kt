@@ -9,7 +9,12 @@ data class RecentUpdateItem(
     val task_no: String? = null,
     val task_status:String? = null,
     val leave_details:String?=null,
-    val leave_status:String?=null
+    val leave_status:String?=null,
+    val start_time:String? = null,
+    val end_time:String? = null,
+    val timeTaken:String? = null,
+    val completed_level:String? = null
+
 ){
     fun doesMatchSearchQuery(query: String): Boolean {
         val matchingCombinations = listOf(

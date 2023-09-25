@@ -50,6 +50,7 @@ import com.gjglobal.daily_task_entry.presentation.components.ToolBar
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.components.TaskCard
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
+import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
@@ -57,6 +58,8 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -193,6 +196,7 @@ fun TaskListScreen(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun InProgressList(viewModel: TaskListViewModel) {
     val leaveList1 by viewModel.recentUpdatesList.collectAsState()
@@ -219,8 +223,8 @@ fun InProgressList(viewModel: TaskListViewModel) {
                         ) {
                             Card(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(130.dp)
+                                    .fillMaxSize()
+                                    //.height(130.dp)
                                     .padding(
                                         vertical = dimensionResource(id = R.dimen.dimen_10),
                                         horizontal = dimensionResource(id = R.dimen.dimen_10)
@@ -306,6 +310,50 @@ fun InProgressList(viewModel: TaskListViewModel) {
                                             )
                                         ) {
                                             Text(
+                                                text = "Time Taken",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(100.dp)
+                                            )
+                                            //Spacer(modifier = Modifier.width(30.dp))
+                                            val startTime = FormatTime(item.start_time!!)
+                                            val endTime = FormatTime(item.end_time!!)
+                                            Text(
+                                                text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+item.timeTaken!!.toDouble()/60+" Hrs"}else{""},
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Level",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(100.dp)
+                                            )
+
+                                            Text(
+                                                text = item.completed_level!!+ " % done",
+                                                style = TextStyle_500_12,
+                                                color = if(item.task_status=="IN PROGRESS"){
+                                                    Color.Red}else{
+                                                    DarkGreenColor}
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
                                                 text = "Job Done",
                                                 style = TextStyle_600_12,
                                                 color = ColorPrimary,
@@ -367,5 +415,24 @@ fun InProgressList(viewModel: TaskListViewModel) {
         }
 
     }
-    //}
+
+
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun FormatTime(time :String):String{
+    val formattedTime = remember { mutableStateOf("") }
+    try {
+        val parsedTime = LocalTime.parse(time)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        formattedTime.value = parsedTime.format(formatter)
+
+    } catch (e: Exception) {
+        // Handle invalid time format
+        formattedTime.value = "Invalid time"
+    }
+    return formattedTime.value
+}
+
+

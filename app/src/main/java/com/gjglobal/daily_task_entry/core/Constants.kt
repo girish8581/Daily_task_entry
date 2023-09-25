@@ -6,10 +6,10 @@ object Constants {
     const val KEY_PASS_CODE = "pass_code_key"
 
     //-server
-    //rconst val BASE_URL = "http://65.1.250.239/"
+   const val BASE_URL = "http://65.1.250.239/"
 
     //-- hotspot
-    const val BASE_URL = "http://192.168.60.129/taskApi/"
+    //const val BASE_URL = "http://192.168.229.129//taskApi/"
 
     //-june wifi
     //const val BASE_URL = "http://192.168.101.77/taskApi/"
