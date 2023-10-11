@@ -20,6 +20,8 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import okhttp3.ResponseBody
+import java.io.File
 
 
 interface TaskRepository {
@@ -50,5 +52,10 @@ interface TaskRepository {
     suspend fun getTasksCount(taskCountSummaryRequest: taskCountSummaryRequest):TaskSummaryCountResponse
 
     suspend fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): StaffTaskDateWiseResponse
+
+    suspend fun uploadImage(file:File,user_id:String):String
+
+    suspend fun downloadProfilePicture(id:Int): ResponseBody
+
 
 }

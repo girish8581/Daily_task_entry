@@ -21,10 +21,17 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TaskApi {
@@ -82,5 +89,16 @@ interface TaskApi {
     suspend fun getStaffTaskDateWise(
         @Body staffTaskDateWiseRequest: StaffTaskDateWiseRequest
     ): StaffTaskDateWiseResponse
+
+    @Multipart
+    @POST("services/image_upload_api.php")
+    suspend fun uploadImage(
+        @Part image: MultipartBody.Part,
+        @Part("user_id") user_id:String
+    ): String
+
+    //"/services/image_api.php?id=$id"
+    @GET("services/image_api.php")
+    suspend fun downloadProfilePicture(@Query("id") id: Int): ResponseBody
 
 }

@@ -71,6 +71,13 @@ class TaskListViewModel @Inject constructor(
             _taskList.value
         )
 
+    fun isEditTask(value:Boolean){
+        _state.value=_state.value.copy(editData = value)
+    }
+
+    fun editTaskItem(value:RecentUpdateItem){
+        _state.value=_state.value.copy(recentUpdateItem = value)
+    }
     fun getTaskList(taskListRequest: TaskListRequest) {
         taskListUseCase.getTaskList(taskListRequest = taskListRequest)
             .onEach { result ->

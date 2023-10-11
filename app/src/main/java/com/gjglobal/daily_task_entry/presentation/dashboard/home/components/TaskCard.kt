@@ -69,6 +69,7 @@ import com.gjglobal.daily_task_entry.presentation.utils.currentDate
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime24
+import com.gjglobal.daily_task_entry.presentation.utils.currentTime24HHMM
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.util.Calendar
 import java.util.Date
@@ -110,6 +111,7 @@ fun TaskCard(
     var expandedStatus by remember { mutableStateOf(false) }
     var expandedLevel by remember { mutableStateOf(false) }
     var cardExpand by remember { mutableStateOf(false) }
+    var clickCount by remember { mutableStateOf(0) }
     var selectedStatus by remember { mutableStateOf("Select status") }
     var selectedLevel by remember { mutableStateOf("Select level") }
     var textJobeDone by remember { mutableStateOf("") }
@@ -563,7 +565,7 @@ fun TaskCard(
                                         ) {
                                             Text(
                                                 text = startTime.value.ifEmpty {
-                                                    currentTime()
+                                                    currentTime24HHMM()
                                                 },
                                                 style = TextStyle_400_14,
                                                 modifier = Modifier.padding(5.dp)
@@ -606,7 +608,7 @@ fun TaskCard(
                                         ) {
                                             Text(
                                                 text = endTime.value.ifEmpty {
-                                                    currentTime()
+                                                    currentTime24HHMM()
                                                 },
                                                 style = TextStyle_400_14,
                                                 modifier = Modifier.padding(5.dp)
@@ -873,6 +875,7 @@ fun TaskCard(
                                 .height(dimensionResource(id = R.dimen.dimen_50))
                                 .clickable {
                                     cardExpand = true
+                                    clickCount++
                                     if (textJobeDone != ""
                                         && startTime.value.isNotEmpty()
                                         && endTime.value.isNotEmpty()
@@ -904,13 +907,19 @@ fun TaskCard(
                                                 id = list.id,
                                                 completed_level = selectedLevel.toString()
                                             ), onSuccess = {
+                                                clickCount = 0
                                                 viewModel.state.value.taskList = null
                                                 onClick.invoke()
                                                 cardExpand = false
                                             }
                                         )
                                     }else{
-                                        Toast.makeText(context,"Please fill data correctly",Toast.LENGTH_LONG).show()
+                                        println("card-expand $cardExpand")
+
+                                        if(clickCount !=1){
+                                            Toast.makeText(context,"Please fill all data correctly!!",Toast.LENGTH_LONG).show()
+                                        }
+
                                     }
 
                                 }, contentAlignment = Alignment.Center

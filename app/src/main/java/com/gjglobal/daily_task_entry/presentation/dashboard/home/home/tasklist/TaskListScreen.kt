@@ -43,12 +43,14 @@ import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.presentation.components.Messagebox
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.components.ToolBar
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.components.TaskCard
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.component.EditTask
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
@@ -77,6 +79,10 @@ fun TaskListScreen(
     var taskListRequest : TaskListRequest?= null
     taskListRequest = TaskListRequest(staff_name = staffName!!, task_status = "IN PROGRESS")
     var showSuccess by remember { mutableStateOf(false) }
+    var listItem by remember { mutableStateOf<RecentUpdateItem?>(null) }
+
+
+
 
     OnLifeCycleEvent { _, event ->
         when (event) {
@@ -139,7 +145,7 @@ fun TaskListScreen(
                             taskStatus = "IN PROGRESS" , onStatusUpdate = {})
                         }
                         item {
-                            InProgressList(viewModel = viewModel)
+                            InProgressList(viewModel = viewModel, navController = navController)
                         }
                     }
                 }else{
@@ -156,7 +162,7 @@ fun TaskListScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    InProgressList(viewModel = viewModel)
+                                    InProgressList(viewModel = viewModel,navController=navController)
 
                                     Image(
                                         painter = painterResource(id = R.drawable.no_records_found),
@@ -193,13 +199,20 @@ fun TaskListScreen(
             //onCancelClick.invoke()
         }, message = "Status updated!!" )
     }
+
+    if(viewModel.state.value.editData!!){
+        EditTask(item = viewModel.state.value.recentUpdateItem!!) {
+            viewModel.isEditTask(false)
+        }
+    }
 }
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun InProgressList(viewModel: TaskListViewModel) {
+fun InProgressList(viewModel: TaskListViewModel,navController: NavController) {
     val leaveList1 by viewModel.recentUpdatesList.collectAsState()
+    val context = LocalContext.current
 
     if (viewModel.state.value.isRecentUpdatesList!!) {
         Box(
@@ -225,6 +238,11 @@ fun InProgressList(viewModel: TaskListViewModel) {
                                 modifier = Modifier
                                     .fillMaxSize()
                                     //.height(130.dp)
+                                    .clickable {
+                                        viewModel.editTaskItem(item)
+                                        viewModel.isEditTask(true)
+
+                                    }
                                     .padding(
                                         vertical = dimensionResource(id = R.dimen.dimen_10),
                                         horizontal = dimensionResource(id = R.dimen.dimen_10)
@@ -235,19 +253,22 @@ fun InProgressList(viewModel: TaskListViewModel) {
 
                                 if (item.project_name.isNullOrBlank().not()) {
                                     Column(
-                                        modifier = Modifier.background(if(item.task_status!! == "COMPLETED")
-                                        {
-                                            doneColor}
-                                        else {
-                                            inProgressColor
-                                        })
+                                        modifier = Modifier
+                                            .background(
+                                                if (item.task_status!! == "COMPLETED") {
+                                                    doneColor
+                                                } else {
+                                                    inProgressColor
+                                                }
+                                            )
                                             .padding(10.dp)
                                     ) {
                                         Row(
                                             horizontalArrangement = Arrangement.SpaceBetween,
-                                            modifier = Modifier.padding(
-                                                horizontal = 10.dp
-                                            )
+                                            modifier = Modifier
+                                                .padding(
+                                                    horizontal = 10.dp
+                                                )
                                                 .fillMaxWidth()
                                         ) {
                                             Text(
@@ -277,7 +298,7 @@ fun InProgressList(viewModel: TaskListViewModel) {
                                             )
                                             Spacer(modifier = Modifier.width(30.dp))
                                             Text(
-                                                text = formatDate(item.date),
+                                                text = formatDate(item.date!!),
                                                 style = TextStyle_500_12,
                                                 color = ColorPrimary
                                             )
@@ -416,8 +437,9 @@ fun InProgressList(viewModel: TaskListViewModel) {
 
     }
 
-
 }
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

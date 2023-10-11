@@ -9,5 +9,6 @@ data class LoginData(
     val qualification: String,
     val staff_name: String,
     val userType: String,
-    val username: String
+    val username: String,
+    val ImageId:String
 )

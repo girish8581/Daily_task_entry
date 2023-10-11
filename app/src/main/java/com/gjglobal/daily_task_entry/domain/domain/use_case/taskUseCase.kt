@@ -1,6 +1,5 @@
 package com.gjglobal.daily_task_entry.domain.domain.use_case
 
-import android.util.Log
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.data.repository.task.TaskRepository
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
@@ -25,7 +24,9 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCoun
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.ResponseBody
 import retrofit2.HttpException
+import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
@@ -93,6 +94,8 @@ class TaskListUseCase @Inject constructor(
                 emit(Resource.Error("Something went wrong."))
             }
         }
+
+
 
     fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): Flow<Resource<StaffTaskDateWiseResponse>?> =
         flow {
@@ -258,6 +261,37 @@ class TaskListUseCase @Inject constructor(
                 emit(Resource.Error("Something went wrong."))
             }
         }
+
+
+    fun uploadProfilePicture(file: File,user_id:String): Flow<Resource<String>> = flow {
+        try {
+            emit(Resource.Loading())
+            val apiResponse = repository.uploadImage(file, user_id)
+                emit(Resource.Success(apiResponse))
+        } catch (e: HttpException) {
+            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+        } catch (e: IOException) {
+            emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+        } catch (e: Exception) {
+            emit(Resource.Error("Something went wrong."))
+        }
+    }
+
+    fun downloadProfilePicture(id:Int): Flow<Resource<ResponseBody>> = flow {
+        try {
+            emit(Resource.Loading())
+            val apiResponse = repository.downloadProfilePicture(id = id)
+                emit(Resource.Success(apiResponse))
+
+        } catch (e: HttpException) {
+            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+        } catch (e: IOException) {
+            emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+        } catch (e: Exception) {
+            emit(Resource.Error("Something went wrong."))
+        }
+    }
+
 
 
 

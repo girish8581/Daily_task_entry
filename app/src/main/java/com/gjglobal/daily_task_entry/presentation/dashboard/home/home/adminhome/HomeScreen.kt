@@ -1,8 +1,6 @@
-package com.gjglobal.daily_task_entry.presentation.dashboard.home.home
+package com.gjglobal.daily_task_entry.presentation.dashboard.home.home.adminhome
 
 import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -16,7 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,25 +42,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
-import coil.transform.CircleCropTransformation
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.core.Constants
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
-import com.gjglobal.daily_task_entry.presentation.theme.BlueWhite
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.HomeScreenViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreen
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
-import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_18
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_20
@@ -71,15 +65,14 @@ import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
 import com.gjglobal.daily_task_entry.presentation.theme.todoColor
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
-import okhttp3.ResponseBody
 import java.io.File
 
 @Composable
-fun HomeScreen(
+fun AdminHomeScreen(
     navController: NavController,
     activity: Activity,
     dashViewModel: DashboardViewModel,
-    viewModel: HomeScreenViewModel= hiltViewModel()
+    viewModel: HomeScreenViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
@@ -103,10 +96,6 @@ fun HomeScreen(
             repeatMode = RepeatMode.Reverse
         )
     )
-
-//    if (animatedOffsetX >= 300f || animatedOffsetX <= -300f) {
-//        direction *= -1
-//    }
 
     var profileImage: File? by remember { mutableStateOf(null) }
 
@@ -470,95 +459,6 @@ fun HomeScreen(
 
 
 @Composable
-fun BoxRow(
-    text: String,
-    imageResId: Int,
-    onclick: (() -> Unit)
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-
-        Box(
-
-            modifier = Modifier
-                .clickable { (onclick.invoke()) }
-                .background(
-                    BlueWhite,
-                    shape = RoundedCornerShape(30.dp)
-                )
-                .size(56.dp), contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = imageResId),
-                contentDescription = "calender logo",
-            )
-        }
-        Spacer(modifier = Modifier.height(5.dp))
-        Text(
-            text = text,
-            style = TextStyle_500_14,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.height(45.dp)
-        )
-    }
-}
-
-@Composable
-fun ProfileImagePicker(
-    onSaveImage: (File) -> Unit
-) {
-    var selectedImage: File? by remember { mutableStateOf(null) }
-    val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        // Handle the selected image URI
-        uri?.let {
-            val inputStream = context.contentResolver.openInputStream(uri)
-            val imageFile = File(context.filesDir, "profile_image.png")
-            inputStream?.use { input ->
-                imageFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
-            }
-            selectedImage = imageFile
-            onSaveImage(imageFile)
-        }
-    }
-
-            if (selectedImage != null) {
-                Image(
-                    painter = rememberImagePainter(data = selectedImage,
-                        builder = {
-                            transformations(CircleCropTransformation())
-                        }),
-                    contentDescription = "Profile Image",
-
-                    modifier = Modifier
-                        .size(90.dp)
-                        .padding(10.dp)
-                        .clickable {
-                            launcher.launch("image/*")
-                        }
-                )
-            }else{
-                Image(
-                    painter = painterResource(id = R.drawable.profile_icons),
-                    contentDescription = "profile icon",
-                    modifier = Modifier
-                        .size(90.dp)
-                        .padding(10.dp)
-                                            .clickable {
-                        launcher.launch("image/*")
-                    }
-                )
-    }
-}
-
-
-@Composable
 fun ImageFromApi(viewModel: HomeScreenViewModel) {
 
     if(viewModel.state.value.isLoading){
@@ -600,8 +500,5 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
             )
         }
     }
-
-
-
-    }
+}
 

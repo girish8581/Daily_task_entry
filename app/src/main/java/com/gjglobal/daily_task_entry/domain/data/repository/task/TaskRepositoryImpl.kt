@@ -22,6 +22,10 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.ResponseBody
+import java.io.File
 import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
@@ -54,6 +58,15 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): StaffTaskDateWiseResponse {
         return api.getStaffTaskDateWise(staffTaskDateWiseRequest = staffTaskDateWiseRequest)
     }
+
+    override suspend fun uploadImage(file: File,user_id:String): String {
+        return api.uploadImage(image = MultipartBody.Part.createFormData(name = "image",filename = file.name, body = file.asRequestBody()), user_id = user_id)
+    }
+
+    override suspend fun downloadProfilePicture(id: Int): ResponseBody {
+       return api.downloadProfilePicture(id=id)
+    }
+
 
     override suspend fun getProjects(): ProjectResponse {
         return api.getProjects()

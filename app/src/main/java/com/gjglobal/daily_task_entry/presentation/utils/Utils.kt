@@ -1,10 +1,20 @@
 package com.gjglobal.daily_task_entry.presentation.utils
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.*
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.HomeScreenViewModel
+import okhttp3.ResponseBody
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.*
 
 
@@ -30,9 +40,16 @@ fun currentTime(): String {
     return stf.format(Date())
 }
 
+
 @SuppressLint("SimpleDateFormat")
 fun currentTime24(): String {
     val stf = SimpleDateFormat("HH:mm:ss", Locale.UK)
+    return stf.format(Date())
+}
+
+@SuppressLint("SimpleDateFormat")
+fun currentTime24HHMM(): String {
+    val stf = SimpleDateFormat("HH:mm", Locale.UK)
     return stf.format(Date())
 }
 
@@ -63,6 +80,12 @@ private fun getSpace(firstStr: String, SecondStr: String): String {
         }
     }
     return sb.toString()
+}
+// Function to format a LocalTime to "HH:mm" format
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatTimeToHHmm(time: String): String {
+    val formatter = DateTimeFormatter.ofPattern("HH:mm")
+    return time.format(formatter)
 }
 
 fun formatDate(date: String): String {
@@ -101,4 +124,30 @@ fun formatDateApi(date: String): String {
     }
     // None of the formats matched, handle the error here (e.g., return an empty string)
     return ""
+}
+
+fun saveFile(body: ResponseBody?, activity: Activity): File? {
+    if (body == null)
+        return null
+    var input: InputStream? = null
+    try {
+        input = body.byteStream()
+        val file = File(activity.cacheDir, "dp.jpg")
+        val fos = FileOutputStream(file)
+        fos.use { output ->
+            val buffer = ByteArray(4 * 1024) // or other buffer size
+            var read: Int
+            while (input.read(buffer).also { read = it } != -1) {
+                output.write(buffer, 0, read)
+            }
+            output.flush()
+        }
+        HomeScreenViewModel.profilePic = file
+        return file
+    } catch (_: Exception) {
+
+    } finally {
+        input?.close()
+    }
+    return null
 }

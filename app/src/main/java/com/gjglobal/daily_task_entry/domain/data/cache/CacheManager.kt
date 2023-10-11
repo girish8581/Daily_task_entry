@@ -2,11 +2,14 @@ package com.gjglobal.daily_task_entry.domain.data.cache
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.gjglobal.daily_task_entry.core.Constants.KEY_AUTH
+import com.gjglobal.daily_task_entry.core.Constants.LOGIN_UNAME_PSWD
 import com.gjglobal.daily_task_entry.domain.domain.model.login.Authorization
+import com.gjglobal.daily_task_entry.domain.domain.model.login.LoginRequest
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
@@ -40,6 +43,23 @@ class CacheManager(applicationContext: Context) {
             return null
         }
         return Gson().fromJson(jsonString, Authorization::class.java)
+    }
+
+    fun saveUsernamePassword(unamePwd: LoginRequest) {
+        Log.e("RELOGINPSWUNAME:::", unamePwd.toString())
+        val jsonString = Gson().toJson(unamePwd)
+        with(sharedPreferences.edit()) {
+            putString(LOGIN_UNAME_PSWD, jsonString)
+            commit()
+        }
+    }
+
+    fun getUsernamePassword(): LoginRequest? {
+        val jsonString = sharedPreferences.getString(LOGIN_UNAME_PSWD, "")
+        if (jsonString.isNullOrEmpty()) {
+            return null
+        }
+        return Gson().fromJson(jsonString, LoginRequest::class.java)
     }
 
 

@@ -1,5 +1,6 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard
 
+import ImageUploadScreen
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,9 +30,9 @@ import androidx.navigation.compose.rememberNavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.presentation.components.NoInternetScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.HomeScreen
-import com.gjglobal.daily_task_entry.presentation.dashboard.home.leave.LeaveScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.taskview.TaskListViewScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.leave.LeaveScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.ReportScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.task.TaskScreen
@@ -178,7 +179,12 @@ fun Navigation(
             ReportScreen(navController = navController,activity = activity, dashViewModel = viewModel)
         }
 
-    }
+        composable(
+            route = Screen.ImageUploadScreen.route
+        ) {
+            ImageUploadScreen(navController = navController,viewModel = viewModel,activity = activity )
+        }
+     }
 }
 
 @ExperimentalMaterialApi

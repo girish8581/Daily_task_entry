@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -89,6 +90,32 @@ fun LottiePopUp(modifier: Modifier, lottie: Int) {
     LottieAnimation(
         composition,
         progress,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun LottiePopUpPlay(modifier: Modifier, lottie: Int) {
+    var isPlaying by remember { mutableStateOf(true) }
+    val speed by remember { mutableStateOf(1f) }
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(lottie))
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        isPlaying = isPlaying,
+        speed = speed,
+    )
+
+    if (progress == 1f && isPlaying) {
+        // Animation has reached the end, toggle isPlaying to restart the animation
+        isPlaying = false
+    } else if (progress == 0f && !isPlaying) {
+        // Animation has restarted, toggle isPlaying to play it
+        isPlaying = true
+    }
+
+    LottieAnimation(
+        composition = composition,
+        progress = progress,
         modifier = modifier,
     )
 }

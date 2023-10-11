@@ -260,7 +260,7 @@ fun ReportList(viewModel: ReportViewModel) {
                                                 )
                                                 Spacer(modifier = Modifier.width(30.dp))
                                                 Text(
-                                                    text = formatDate(item.date),
+                                                    text = formatDate(item.date!!),
                                                     style = TextStyle_600_14,
                                                     color = ColorPrimary
                                                 )
@@ -386,7 +386,7 @@ fun ReportList(viewModel: ReportViewModel) {
                                                 )
                                                 Spacer(modifier = Modifier.width(30.dp))
                                                 Text(
-                                                    text = formatDate(item.date),
+                                                    text = formatDate(item.date!!),
                                                     style = TextStyle_600_14,
                                                     color = ColorPrimary
                                                 )

@@ -62,6 +62,8 @@ import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.presentation.components.DialogPopup
+import com.gjglobal.daily_task_entry.presentation.components.LottiePopUp
+import com.gjglobal.daily_task_entry.presentation.components.LottiePopUpPlay
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardActivity
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
@@ -93,9 +95,17 @@ fun LoginScreen(
     OnLifeCycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
-                try {
 
-                }catch (e:Exception){
+                try {
+                    if (cacheManager.getUsernamePassword()?.username!!.isNotEmpty()) {
+                        viewModel.login(
+                            cacheManager.getUsernamePassword()?.username!!,
+                            cacheManager.getUsernamePassword()?.password!!,
+                            activity
+                        )
+                    }
+
+                } catch (e: Exception) {
                     println(e)
                 }
 
@@ -132,11 +142,17 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                Image(
-                    modifier = Modifier.padding(top = 100.dp),
-                    painter = painterResource(id = R.drawable.notes),
-                    contentDescription = "Task logo"
+//                Image(
+//                    modifier = Modifier.padding(top = 100.dp),
+//                    painter = painterResource(id = R.drawable.notes),
+//                    contentDescription = "Task logo"
+//                )
+
+                LottiePopUpPlay(
+                    modifier = Modifier.size(dimensionResource(id = R.dimen.dimen_250)),
+                    lottie = R.raw.task2
                 )
+
                 Spacer(modifier = Modifier.height(25.dp))
                 Text(
                     "GJ Task Management",

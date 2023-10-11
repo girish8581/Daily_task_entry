@@ -4,7 +4,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.gjglobal.hms_gj.presentation.splash.SplashState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -17,7 +16,7 @@ class SplashViewModel @Inject constructor() : ViewModel() {
     init {
         _state.value = SplashState(isLoading = true)
         viewModelScope.launch {
-            delay(1000)
+            delay(4000)
             _state.value = SplashState(isLoading = false)
         }
     }

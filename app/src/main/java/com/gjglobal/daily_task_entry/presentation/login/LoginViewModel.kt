@@ -46,7 +46,7 @@ class LoginViewModel @Inject constructor(
         _state.value=_state.value.copy(confirmPassword = password, isValidPassword = password.isNotEmpty())
     }
     fun login(username: String,password: String,activity: Activity) {
-        //cacheManager.saveUsernamePassword(unamePwd = LoginRequest(username= username, password = password))
+        cacheManager.saveUsernamePassword(unamePwd = LoginRequest(username= username, password = password))
         loginUseCase.login(LoginRequest(username =username, password = password)).onEach { result ->
             when (result) {
                 is Resource.Success -> {

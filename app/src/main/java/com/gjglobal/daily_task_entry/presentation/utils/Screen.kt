@@ -14,6 +14,8 @@ sealed class Screen(val route: String) {
     object TaskAssignScreen : Screen("task_assign_screen")
 
     object ReportScreen : Screen("report_screen")
+    object ImageUploadScreen : Screen("image_upload_screen")
+    object AdminHomeScreen : Screen("Admin_home_screen")
 
 }
 
