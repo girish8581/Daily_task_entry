@@ -16,6 +16,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
@@ -65,6 +66,13 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun downloadProfilePicture(id: Int): ResponseBody {
        return api.downloadProfilePicture(id=id)
+    }
+
+    override suspend fun editTaskEntry(
+        editTaskEntryRequest: EditTaskEntryRequest,
+        id: String
+    ): TaskStatusUpdateResponse {
+        return api.editDailyTaskEntry(editTaskEntryRequest, id)
     }
 
 

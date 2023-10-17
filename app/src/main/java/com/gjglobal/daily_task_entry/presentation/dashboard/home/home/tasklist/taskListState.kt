@@ -13,5 +13,6 @@ data class TaskListState(
     var isStatusSaved: Boolean? = false,
     var isStatusUpdated:Boolean? = false,
     var recentUpdateItem :RecentUpdateItem? = null,
-    var editData :Boolean? = false
+    var editData :Boolean? = false,
+    var editDataSuccess :Boolean? = false
 )

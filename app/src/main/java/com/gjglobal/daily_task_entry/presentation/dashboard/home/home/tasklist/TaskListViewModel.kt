@@ -10,6 +10,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRe
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
@@ -73,6 +74,10 @@ class TaskListViewModel @Inject constructor(
 
     fun isEditTask(value:Boolean){
         _state.value=_state.value.copy(editData = value)
+    }
+
+    fun showEditSuccess(value:Boolean){
+        _state.value=_state.value.copy(editDataSuccess = value)
     }
 
     fun editTaskItem(value:RecentUpdateItem){
@@ -226,5 +231,36 @@ class TaskListViewModel @Inject constructor(
                 }
             }.launchIn(viewModelScope)
     }
+
+    fun editTaskEntry(editTaskEntryRequest: EditTaskEntryRequest, id :String,onSuccess: () -> Unit) {
+        taskListUseCase.editTaskEntry(
+            editTaskEntryRequest, id).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    onSuccess.invoke()
+                    Log.i("status succuss",result.data.toString())
+                    _state.value =
+                        _state.value.copy(isLoading = false, isStatusUpdated = true)
+
+                }
+
+                is Resource.Error -> {
+                    Log.i("status error",result.data.toString())
+                    _state.value = _state.value.copy(
+                        isLoading = false,isStatusUpdated = false,
+                        error = result.message ?: "An unexpected error occurred",
+                    )
+                }
+
+                is Resource.Loading -> {
+                    Log.e("loading", "")
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
 }
 

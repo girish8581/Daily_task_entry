@@ -59,6 +59,7 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
+import com.gjglobal.daily_task_entry.presentation.utils.Screen
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -75,7 +76,6 @@ fun TaskListScreen(
     val cacheManager = CacheManager(context)
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
     val staffName = userData?.staff_name
-
     var taskListRequest : TaskListRequest?= null
     taskListRequest = TaskListRequest(staff_name = staffName!!, task_status = "IN PROGRESS")
     var showSuccess by remember { mutableStateOf(false) }
@@ -201,10 +201,21 @@ fun TaskListScreen(
     }
 
     if(viewModel.state.value.editData!!){
-        EditTask(item = viewModel.state.value.recentUpdateItem!!) {
-            viewModel.isEditTask(false)
-        }
+        EditTask(item = viewModel.state.value.recentUpdateItem!!,
+            onClickCancelBtn = {viewModel.isEditTask(false)}, onEditSuccess = {
+                viewModel.showEditSuccess(true)
+            }, viewModel = viewModel
+        )
     }
+
+    if(viewModel.state.value.editDataSuccess!!){
+        Messagebox(onSuccess = { viewModel.showEditSuccess(false)
+            navController.navigate(Screen.TaskListScreen.route)},
+            message = "Task edited successfully!")
+
+    }
+
+
 }
 
 
@@ -339,8 +350,19 @@ fun InProgressList(viewModel: TaskListViewModel,navController: NavController) {
                                             //Spacer(modifier = Modifier.width(30.dp))
                                             val startTime = FormatTime(item.start_time!!)
                                             val endTime = FormatTime(item.end_time!!)
+//                                            Text(
+//                                                text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+item.timeTaken!!.toDouble()/60+" Hrs"}else{""},
+//                                                style = TextStyle_500_12,
+//                                                color = ColorPrimary
+//                                            )
+
                                             Text(
-                                                text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+item.timeTaken!!.toDouble()/60+" Hrs"}else{""},
+                                                text = "$startTime to $endTime" +
+                                                        (if (!item.timeTaken.isNullOrEmpty()) {
+                                                            " / " + String.format("%.2f", item.timeTaken.toDouble() / 60) + " Hrs"
+                                                        } else {
+                                                            ""
+                                                        }),
                                                 style = TextStyle_500_12,
                                                 color = ColorPrimary
                                             )
@@ -365,6 +387,46 @@ fun InProgressList(viewModel: TaskListViewModel,navController: NavController) {
                                                 color = if(item.task_status=="IN PROGRESS"){
                                                     Color.Red}else{
                                                     DarkGreenColor}
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Break Hours",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(100.dp)
+                                            )
+
+                                            Text(
+                                                text = (item.total_break_hours!!.toDouble()/60).toString()+ "Hrs",
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Jira Id",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(100.dp)
+                                            )
+
+                                            Text(
+                                                text = item.jira_no!!,
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
                                             )
                                         }
 

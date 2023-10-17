@@ -16,6 +16,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
@@ -291,6 +292,22 @@ class TaskListUseCase @Inject constructor(
             emit(Resource.Error("Something went wrong."))
         }
     }
+
+
+    fun editTaskEntry(editTaskEntryRequest: EditTaskEntryRequest,id :String): Flow<Resource<TaskStatusUpdateResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.editTaskEntry(editTaskEntryRequest, id)
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
 
 
 

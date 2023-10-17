@@ -15,6 +15,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
@@ -100,5 +101,9 @@ interface TaskApi {
     //"/services/image_api.php?id=$id"
     @GET("services/image_api.php")
     suspend fun downloadProfilePicture(@Query("id") id: Int): ResponseBody
+
+    @PUT("services/editTaskEntry.php")
+    suspend fun editDailyTaskEntry(@Body editTaskEntryRequest: EditTaskEntryRequest, @Query("id") id: String): TaskStatusUpdateResponse
+
 
 }

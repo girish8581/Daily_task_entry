@@ -15,7 +15,9 @@ data class TaskListItem(
     val project_status:String,
     val updated_date:String,
     val entry_date:String,
-    val taskTime:String
+    val taskTime:String?=null,
+    val time_taken:String?=null,
+    val completed_level:String
 ){
 
     fun doesMatchSearchQuery(query: String): Boolean {

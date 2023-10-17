@@ -50,16 +50,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.gjglobal.daily_task_entry.R
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
+import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_14
-import com.gjglobal.daily_task_entry.presentation.utils.formatDate
+import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
+import com.gjglobal.daily_task_entry.presentation.utils.currentTime24
 import com.gjglobal.daily_task_entry.presentation.utils.formatTimeToHHmm
 import java.util.Calendar
 import java.util.Date
@@ -71,6 +75,8 @@ import java.util.Date
 fun EditTask(
     item: RecentUpdateItem,
     onClickCancelBtn: (() -> Unit),
+    onEditSuccess: (() -> Unit),
+    viewModel: TaskListViewModel,
 ) {
     val context = LocalContext.current
     val mCalendar = Calendar.getInstance()
@@ -90,11 +96,14 @@ fun EditTask(
     var sDay: String
     val startTime = remember { mutableStateOf("") }
     val endTime = remember { mutableStateOf("") }
+    val textJiraId = remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf("Select status") }
     var expandedStatus by remember { mutableStateOf(false) }
     var selectedLevel by remember { mutableStateOf("Select level") }
     var expandedLevel by remember { mutableStateOf(false) }
     var textJobeDone by remember { mutableStateOf("") }
+    var selectedBreakHours by remember { mutableStateOf("Select") }
+    var expandedBreakHours by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
@@ -106,12 +115,17 @@ fun EditTask(
     val listLevelItems =
         ArrayList(listOf("10","20","30","40","50","60","70","80","90","100"))
 
+    val listBreakHours =
+        ArrayList(listOf("0","0.25","0.5","1","1.5","2","2.5","3"))
+
     startTime.value = item.start_time!!
     endTime.value = item.end_time!!
     date.value = item.date!!
     selectedLevel = item.completed_level!!
     selectedStatus = item.task_status!!
     textJobeDone = item.job_done!!
+    textJiraId.value = item.jira_no!!
+    selectedBreakHours = (item.total_break_hours!!.toDouble()/60).toString()
 
     val datePickerDialog = DatePickerDialog(
         context,
@@ -220,29 +234,29 @@ fun EditTask(
                 Text(text = item.task_no ?: "No task number available",style = TextStyle_600_12, color = Color.Red) // Provide a default text if task_no is null
             }
 
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()){
-                Text(text = "StartTime", style = TextStyle_500_12)
-                Text(text = item.start_time ?: "No start time available",style = TextStyle_500_12)
-            }
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()){
-                Text(text = "End Time", style = TextStyle_500_12)
-                Text(text = item.end_time ?: "No end time available",style = TextStyle_500_12)
-            }
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()){
-                Text(text = "JobDone", style = TextStyle_500_12)
-                Text(text = item.job_done ?: "No job details available",style = TextStyle_500_12)
-            }
-
-            Row(horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()){
-                Text(text = "Status", style = TextStyle_500_12)
-                Text(text = item.task_status ?: "No status available",style = TextStyle_500_12)
-            }
+//            Row(horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier.fillMaxWidth()){
+//                Text(text = "StartTime", style = TextStyle_500_12)
+//                Text(text = item.start_time,style = TextStyle_500_12)
+//            }
+//
+//            Row(horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier.fillMaxWidth()){
+//                Text(text = "End Time", style = TextStyle_500_12)
+//                Text(text = item.end_time,style = TextStyle_500_12)
+//            }
+//
+//            Row(horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier.fillMaxWidth()){
+//                Text(text = "JobDone", style = TextStyle_500_12)
+//                Text(text = item.job_done,style = TextStyle_500_12)
+//            }
+//
+//            Row(horizontalArrangement = Arrangement.SpaceBetween,
+//                modifier = Modifier.fillMaxWidth()){
+//                Text(text = "Status", style = TextStyle_500_12)
+//                Text(text = item.task_status,style = TextStyle_500_12)
+//            }
 
 //            Spacer(modifier = Modifier.height(15.dp))
 //            Row(
@@ -516,6 +530,148 @@ fun EditTask(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Break hours",
+                    style = TextStyle_400_14,
+                    modifier = Modifier.width(150.dp),
+                    color = Color.Red
+
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+                Box(
+                    modifier = Modifier
+                        .border(
+                            0.5.dp,
+                            color = ColorPrimary,
+                            shape = RoundedCornerShape(4.27.dp)
+                        )
+                        .width(80.dp)
+                        .height(35.dp)
+                ) {
+                    ExposedDropdownMenuBox(
+                        expanded = expandedBreakHours,
+                        onExpandedChange = {
+                            expandedBreakHours = !expandedBreakHours
+                        }) {
+                        ExposedDropdownMenu(expanded = expandedBreakHours,
+                            onDismissRequest = { expandedBreakHours = false }) {
+                            listBreakHours.forEach { selectedOption ->
+                                DropdownMenuItem(onClick = {
+                                    selectedBreakHours = selectedOption
+                                    expandedBreakHours = false
+                                }) {
+                                    Text(
+                                        text = selectedOption,
+                                        style = TextStyle_400_14,
+                                        fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
+                                    )
+                                }
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 15.dp)
+                                .fillMaxSize()
+                                .clickable {
+                                    expandedBreakHours = true
+                                },
+
+                            ) {
+                            Text(
+                                text = selectedBreakHours,
+                                color = ColorPrimary,
+                                style = TextStyle_400_12
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                            Image(
+                                painter = painterResource(id = R.drawable.down_arrow),
+                                contentDescription = "down arrow"
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = "Hrs",
+                    style = TextStyle_400_14,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .background(LightBlue)
+
+                        .background(
+                            Color.White,
+                            shape = RoundedCornerShape(7.dp)
+                        )
+                        .border(
+                            BorderStroke(1.dp, ColorPrimary),
+                            shape = RoundedCornerShape(7.dp)
+                        )
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(
+                            dimensionResource(id = R.dimen.dimen_5)
+                        )
+                    ) {
+                        Text(
+                            text = "Jira Id",
+                            color = TextColor,
+                            style = TextStyle_400_12,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                        Spacer(
+                            modifier = Modifier.height(
+                                dimensionResource(
+                                    id = R.dimen.dimen_2
+                                )
+                            )
+                        )
+                        BasicTextField(
+                            value = textJiraId.value,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.Start)
+                                .focusRequester(focusRequester),
+                            onValueChange = {
+
+                                textJiraId.value = it
+                                //                 viewModel.isValidUsername(it)
+                            },
+                            textStyle = TextStyle_500_16,
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text
+                            )
+                        )
+
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -568,6 +724,28 @@ fun EditTask(
                 horizontalArrangement = Arrangement.Center){
                 Button(
                     onClick = {
+                        onClickCancelBtn.invoke()
+                        viewModel.editTaskEntry(
+                            EditTaskEntryRequest(
+                                id = item.id!!,
+                                jira_no = textJiraId.value,
+                                date = item.date,
+                                job_done =textJobeDone,
+                                task_no = item.task_no!!,
+                                start_time = startTime.value,
+                                end_time = endTime.value,
+                                break_hours = (selectedBreakHours.toDouble()*60).toString(),
+                                completed_level = selectedLevel,
+                                staff_name = item.staff_name!!,
+                                task_details = item.task_details!!,
+                                task_status = selectedStatus,
+                                created_on = currentDateApi() + " " + currentTime24().replace(" ",""),
+                            ), onSuccess = {
+                                onEditSuccess.invoke()
+
+                            },
+                            id=item.id
+                        )
 
                     },
                     colors = ButtonDefaults.buttonColors(backgroundColor = ColorPrimary),

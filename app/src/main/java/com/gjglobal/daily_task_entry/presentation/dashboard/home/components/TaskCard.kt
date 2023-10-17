@@ -58,12 +58,14 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
+import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
+import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.lightestBlue
 import com.gjglobal.daily_task_entry.presentation.utils.currentDate
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
@@ -108,13 +110,21 @@ fun TaskCard(
     val remarksAny = remember { mutableStateOf("nil") }
     val workAt = remember { mutableStateOf("Office") }
     var selectedDate: String = ""
-    var expandedStatus by remember { mutableStateOf(false) }
+
     var expandedLevel by remember { mutableStateOf(false) }
     var cardExpand by remember { mutableStateOf(false) }
     var clickCount by remember { mutableStateOf(0) }
+    var expandedStatus by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("Select status") }
     var selectedLevel by remember { mutableStateOf("Select level") }
     var textJobeDone by remember { mutableStateOf("") }
+    var selectedBreakHours by remember { mutableStateOf("Select") }
+    var expandedBreakHours by remember { mutableStateOf(false) }
+
+    var selectedQAStatus by remember { mutableStateOf("Select status") }
+    var expandedQAStatus by remember { mutableStateOf(false) }
+    val listQAStatusItems =
+        ArrayList(listOf("Refinement not ready","Ready for QA Testing", "QA Testing Passed","QA Testing Failed","IN HOLD"))
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -124,6 +134,9 @@ fun TaskCard(
 
     val listLevelItems =
         ArrayList(listOf("10","20","30","40","50","60","70","80","90","100"))
+
+    val listBreakHours =
+        ArrayList(listOf("0","0.25","0.5","1","1.5","2","2.5","3"))
 
     val pYear: Int
     val pMonth: Int
@@ -319,13 +332,64 @@ fun TaskCard(
                     ) {
                         Text(
                             modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = "Task time",
+                            text = "Allotted time",
                             style = TextStyle_400_14
                         )
                         Text(
                             modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
                             text = list.taskTime + " Hours",
-                            style = TextStyle_500_14
+                            style = TextStyle_600_14,
+                            color = ColorPrimary
+                        )
+
+                    }
+
+                    Row(
+                        modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = "Total Time Taken",
+                            style = TextStyle_400_14
+                        )
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = list.time_taken + " Hours",
+                            style = TextStyle_600_14,
+                            color = if ((list.time_taken?.toDouble()
+                                    ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                            ) {
+                                Color.Red
+                            } else {
+                                DarkGreenColor
+                            }
+
+                        )
+
+                    }
+
+                    Row(
+                        modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = "Completed level",
+                            style = TextStyle_400_14
+                        )
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = list.completed_level + " %",
+                            style = TextStyle_500_14,
+                            color = if ((list.time_taken?.toDouble()
+                                    ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                            ) {
+                                Color.Red
+                            } else {
+                                DarkGreenColor
+                            }
+
                         )
 
                     }
@@ -594,6 +658,7 @@ fun TaskCard(
                                     Row(
                                         modifier = Modifier.width(150.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         //selectedFromDate = mTime.value
                                         Box(
@@ -624,6 +689,82 @@ fun TaskCard(
                                         )
                                     }
                                 }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Break hours",
+                                    style = TextStyle_400_14,
+                                    modifier = Modifier.width(150.dp),
+                                    color = Color.Red
+
+                                )
+
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .border(
+                                            0.5.dp,
+                                            color = ColorPrimary,
+                                            shape = RoundedCornerShape(4.27.dp)
+                                        )
+                                        .width(80.dp)
+                                        .height(35.dp)
+                                ) {
+                                    ExposedDropdownMenuBox(
+                                        expanded = expandedBreakHours,
+                                        onExpandedChange = {
+                                            expandedBreakHours = !expandedBreakHours
+                                        }) {
+                                        ExposedDropdownMenu(expanded = expandedBreakHours,
+                                            onDismissRequest = { expandedBreakHours = false }) {
+                                            listBreakHours.forEach { selectedOption ->
+                                                DropdownMenuItem(onClick = {
+                                                    selectedBreakHours = selectedOption
+                                                    expandedBreakHours = false
+                                                }) {
+                                                    Text(
+                                                        text = selectedOption,
+                                                        style = TextStyle_400_14,
+                                                        fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .padding(start = 8.dp, end = 15.dp)
+                                                .fillMaxSize()
+                                                .clickable {
+                                                    expandedBreakHours = true
+                                                },
+
+                                            ) {
+                                            Text(
+                                                text = selectedBreakHours,
+                                                color = ColorPrimary,
+                                                style = TextStyle_400_12
+                                            )
+                                            Spacer(modifier = Modifier.height(15.dp))
+                                            Image(
+                                                painter = painterResource(id = R.drawable.down_arrow),
+                                                contentDescription = "down arrow"
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "Hrs",
+                                    style = TextStyle_400_14,
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -690,6 +831,76 @@ fun TaskCard(
                                                 painter = painterResource(id = R.drawable.down_arrow),
                                                 contentDescription = "down arrow"
                                             )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(selectedStatus=="COMPLETED") {
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select QA Status:",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(100.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedQAStatus,
+                                            onExpandedChange = {
+                                                expandedQAStatus = !expandedQAStatus
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedQAStatus,
+                                                onDismissRequest = { expandedQAStatus = false }) {
+                                                listQAStatusItems.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedQAStatus = selectedOption
+                                                        expandedQAStatus = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedQAStatus) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedQAStatus = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedQAStatus,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -880,6 +1091,7 @@ fun TaskCard(
                                         && startTime.value.isNotEmpty()
                                         && endTime.value.isNotEmpty()
                                         && selectedStatus != "Select status"
+                                        && selectedBreakHours != "Select"
                                         && startTime.value != endTime.value) {
 
                                         viewModel.saveTaskStatus(
@@ -905,7 +1117,8 @@ fun TaskCard(
                                                 task_status = selectedStatus,
                                                 work_at = workAt.value,
                                                 id = list.id,
-                                                completed_level = selectedLevel.toString()
+                                                completed_level = selectedLevel,
+                                                break_hours = (selectedBreakHours.toDouble()*60).toString()
                                             ), onSuccess = {
                                                 clickCount = 0
                                                 viewModel.state.value.taskList = null
@@ -961,6 +1174,7 @@ fun TaskCard(
 
     if(selectedStatus=="IN PROGRESS"){
         selectedLevel = ""
+        selectedQAStatus = "Development in progress"
     }
 
     if (clickFullDay) {
