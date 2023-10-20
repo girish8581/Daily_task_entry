@@ -30,8 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gjglobal.daily_task_entry.presentation.theme.BgBlur
+import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.darkred
-import com.gjglobal.daily_task_entry.presentation.theme.hmstheme
 
 
 @Composable
@@ -115,7 +115,7 @@ fun DialogPopup(
                         onClick = {
                             onOkBtn.invoke()
                         },
-                        colors = ButtonDefaults.buttonColors(hmstheme),
+                        colors = ButtonDefaults.buttonColors(ColorPrimary),
                         modifier = Modifier
                             .weight(0.3f)
                             .height(40.dp),

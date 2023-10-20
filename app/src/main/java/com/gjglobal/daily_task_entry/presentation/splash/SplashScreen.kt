@@ -10,17 +10,20 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
+import com.gjglobal.daily_task_entry.presentation.components.LottiePopUp
 import com.gjglobal.daily_task_entry.presentation.theme.BlueRms
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
 
@@ -47,16 +50,20 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Image(
-                modifier = Modifier.padding(top = 10.dp),
-                painter = painterResource(id = R.drawable.notes),
-                contentDescription = "product logo"
+//            Image(
+//                modifier = Modifier.padding(top = 10.dp),
+//                painter = painterResource(id = R.drawable.notes),
+//                contentDescription = "product logo"
+//            )
+
+            LottiePopUp(
+                modifier = Modifier.size(dimensionResource(id = R.dimen.dimen_200)),
+                lottie = R.raw.task4
             )
 
         }
         if (state.isLoading.not()) {
             LaunchedEffect(key1 = true) {
-
                 try {
                         navController.navigate(Screen.LoginScreen.route) {
                             popUpTo(Screen.SplashScreen.route) {

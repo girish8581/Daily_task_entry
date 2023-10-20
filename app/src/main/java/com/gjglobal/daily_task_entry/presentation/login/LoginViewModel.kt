@@ -1,16 +1,29 @@
 package com.gjglobal.daily_task_entry.presentation.login
 
+import android.app.Activity
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
+import com.gjglobal.daily_task_entry.domain.domain.model.login.LoginRequest
+import com.gjglobal.daily_task_entry.domain.domain.use_case.LoginUseCase
+import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardActivity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val loginUseCase: LoginUseCase
+
 ) : ViewModel(){
     private val _state = mutableStateOf(LoginState())
     val state: State<LoginState> = _state
@@ -32,50 +45,35 @@ class LoginViewModel @Inject constructor(
     fun isValidConfirmPassword(password:String){
         _state.value=_state.value.copy(confirmPassword = password, isValidPassword = password.isNotEmpty())
     }
-//    fun login(username: String,password: String,activity:Activity) {
-//        cacheManager.saveUsernamePassword(unamePwd = LoginRequest(username= username, password = password))
-//        loginUseCase.login(LoginRequest(username =username, password = password)).onEach { result ->
-//            when (result) {
-//                is Resource.Success -> {
-//                    Log.e("1st log", result.data.toString())
-//                    Log.e("1st log", result.data?.message.toString())
-//                    Log.e("1st log", result.data?.success.toString())
-//                    Log.e("1st log", result.data?.status.toString())
-//                    Log.e("1st log", result.data?.data.toString())
-//                    _state.value = _state.value.copy(isLoading = false, authorization = result.data)
-//                    result.data?.let { cacheManager.saveAuthResponse(it) }
-//                }
-//                is Resource.Error -> {
-//                    if(result.message == "HTTP 409 "){
-//                        Log.e("2nd log", result.data.toString())
-//                      if (  cacheManager.getUsernamePassword()?.username!!.isNullOrEmpty().not()){
-//                          Log.e("3rd log", result.data.toString())
-//                          _state.value = _state.value.copy(isLogout = true)
-//                      }else{
-//                          Log.e("4th log", result.data.toString())
-//                          activity.startActivity(
-//                              Intent(
-//                                  activity,
-//                                  DashboardActivity::class.java
-//                              )
-//                          )
-//                          activity.finish()
-//                      }
-//
-//                    }else if (result.message == "HTTP 400 "){
-//                        Toast.makeText(activity,"Invalid Credentials",Toast.LENGTH_SHORT).show()
-//                    }
-//                   Log.e("5th log", result.data?.success.toString())
-//                        Log.e("6th log", result.data.toString())
-//
-//                    _state.value = _state.value.copy(isLoading = false, error = result.message ?: "An unexpected error occurred")
-//                }
-//                is Resource.Loading -> {
-//                    _state.value = _state.value.copy(isLoading = true)
-//                }
-//
-//                else -> {}
-//            }
-//        }.launchIn(viewModelScope)
-//    }
+    fun login(username: String,password: String,activity: Activity) {
+        cacheManager.saveUsernamePassword(unamePwd = LoginRequest(username= username, password = password))
+        loginUseCase.login(LoginRequest(username =username, password = password)).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    Log.e("login log", result.data.toString())
+                    _state.value = _state.value.copy(isLoading = false, authorization = result.data)
+                    result.data?.let { cacheManager.saveAuthResponse(it) }
+
+//                    activity.startActivity(
+//                        Intent(
+//                            activity,
+//                            DashboardActivity::class.java
+//                        )
+//                    )
+                    activity.finish()
+                }
+
+                is Resource.Error -> {
+                        Log.e("error login", result.data.toString())
+
+                    _state.value = _state.value.copy(isLoading = false, error = result.message ?: "An unexpected error occurred")
+                }
+                is Resource.Loading -> {
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
 }

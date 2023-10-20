@@ -1,7 +1,6 @@
 package com.gjglobal.daily_task_entry.presentation.login
 
-import com.gjglobal.hms_gj.domain.domain.model.login.Authorization
-
+import com.gjglobal.daily_task_entry.domain.domain.model.login.Authorization
 
 
 data class LoginState(
