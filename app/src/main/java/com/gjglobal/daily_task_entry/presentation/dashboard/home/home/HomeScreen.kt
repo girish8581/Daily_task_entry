@@ -62,11 +62,13 @@ import com.gjglobal.daily_task_entry.presentation.theme.BlueWhite
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreen
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
+import com.gjglobal.daily_task_entry.presentation.theme.PurpleGrey80
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_18
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_20
+import com.gjglobal.daily_task_entry.presentation.theme.TimeColor
 import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
 import com.gjglobal.daily_task_entry.presentation.theme.todoColor
@@ -215,7 +217,7 @@ fun HomeScreen(
                     ) {
 
                         Image(
-                            painter = painterResource(id = R.drawable.todo),
+                            painter = painterResource(id = R.drawable.todo_icon),
                             contentDescription = "profile icon",
                             modifier = Modifier
                                 .size(60.dp)
@@ -296,7 +298,7 @@ fun HomeScreen(
 
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.todo),
+                        painter = painterResource(id = R.drawable.inprogress),
                         contentDescription = "profile icon",
                         modifier = Modifier
                             .size(60.dp)
@@ -342,6 +344,70 @@ fun HomeScreen(
                 }
             }
         }
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = 10.dp, horizontal = 20.dp
+                    )
+                    .clickable {
+                        navController.navigate(Screen.TaskListCompleteViewScreen.route)
+                    },
+                shape = RoundedCornerShape(20.dp),
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(PurpleGrey80)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(
+                                horizontal = 10.dp,
+                                vertical = 10.dp
+                            )
+
+                            .fillMaxWidth()
+
+
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.qa_icon),
+                            contentDescription = "profile icon",
+                            modifier = Modifier
+                                .size(60.dp)
+                                .padding(10.dp)
+                        )
+
+
+                        Column(
+                            modifier = Modifier.padding(horizontal = 30.dp)
+
+                        ) {
+
+                            Text(
+                                text = "Under QA", style = TextStyle_800_18
+                            )
+
+                            if(state.taskCount?.get(0)?.completed_count.isNullOrBlank().not()) {
+                                if (state.isTaskCount!!) {
+                                    Text(
+                                        text = if (state.isTaskCount!!) {
+                                            state.taskCount?.get(0)?.completed_count!! + " Tasks"
+                                        } else {
+                                            "0 Tasks"
+                                        }, style = TextStyle_600_12,
+                                        color = ColorPrimary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             Card(
                 modifier = Modifier
@@ -374,7 +440,7 @@ fun HomeScreen(
 
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.todo),
+                            painter = painterResource(id = R.drawable.done_icon),
                             contentDescription = "profile icon",
                             modifier = Modifier
                                 .size(60.dp)
@@ -388,7 +454,7 @@ fun HomeScreen(
                         ) {
 
                             Text(
-                                text = "Done", style = TextStyle_800_18
+                                text = "QA Passed", style = TextStyle_800_18
                             )
 
                             if(state.taskCount?.get(0)?.completed_count.isNullOrBlank().not()) {
@@ -407,6 +473,8 @@ fun HomeScreen(
                     }
                 }
             }
+
+
 
             Card(
                 modifier = Modifier
@@ -439,7 +507,7 @@ fun HomeScreen(
 
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.todo),
+                            painter = painterResource(id = R.drawable.leave),
                             contentDescription = "profile icon",
                             modifier = Modifier
                                 .size(60.dp)
