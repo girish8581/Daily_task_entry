@@ -32,8 +32,11 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +59,7 @@ import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
@@ -69,7 +73,6 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.lightestBlue
 import com.gjglobal.daily_task_entry.presentation.utils.currentDate
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
-import com.gjglobal.daily_task_entry.presentation.utils.currentTime
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime24
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime24HHMM
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
@@ -86,7 +89,8 @@ fun TaskCard(
     viewModel: TaskListViewModel,
     buttonEnable:Boolean,
     taskStatus:String,
-    onStatusUpdate: () -> Unit
+    onStatusUpdate: () -> Unit,
+    qaEnable:Boolean
 ) {
     val context = LocalContext.current
     val mContext = LocalContext.current
@@ -113,6 +117,7 @@ fun TaskCard(
 
     var expandedLevel by remember { mutableStateOf(false) }
     var cardExpand by remember { mutableStateOf(false) }
+    var qaCardExpand by remember { mutableStateOf(false) }
     var clickCount by remember { mutableStateOf(0) }
     var expandedStatus by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("Select status") }
@@ -123,14 +128,17 @@ fun TaskCard(
 
     var selectedQAStatus by remember { mutableStateOf("Select status") }
     var expandedQAStatus by remember { mutableStateOf(false) }
+    var isMoveInProgress by remember { mutableStateOf(false) }
+
+
     val listQAStatusItems =
-        ArrayList(listOf("Refinement not ready","Ready for QA Testing", "QA Testing Passed","QA Testing Failed","IN HOLD"))
+        ArrayList(listOf("Ready for QA Testing","Refinement not ready","QA Testing Progress", "QA Testing Passed","QA Testing Failed"))
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
     val listStatusItems =
-        ArrayList(listOf("IN PROGRESS","COMPLETED", "IN HOLD"))
+        ArrayList(listOf("IN PROGRESS","In QA Testing","TO DO"))
 
     val listLevelItems =
         ArrayList(listOf("10","20","30","40","50","60","70","80","90","100"))
@@ -218,8 +226,6 @@ fun TaskCard(
         }, mHour, mMinute, false
     )
 
-
-
     Column(Modifier.background(Color.White)) {
 
         Card(
@@ -244,12 +250,25 @@ fun TaskCard(
                     )
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.notes),
+                        painter = painterResource(id = when (taskStatus) {
+                            "COMPLETED" -> {R.drawable.done_icon}
+                            "TO DO" -> { R.drawable.todo_icon}
+                            "IN PROGRESS" -> { R.drawable.inprogress}
+                            "In QA Testing" -> {R.drawable.qa_icon}
+                            else -> { R.drawable.notes}
+                        }
+                        ),
                         contentDescription = stringResource(id = R.string.app_name),
                         modifier = Modifier
                             .size(dimensionResource(id = R.dimen.dimen_50))
                             .clickable {
-                                cardExpand = !cardExpand
+                                if(taskStatus=="IN PROGRESS"){
+                                    cardExpand = !cardExpand
+                                }
+                                if(taskStatus == "In QA Testing"){
+                                    qaCardExpand = !qaCardExpand
+                                }
+
                             }
 
                     )
@@ -272,21 +291,64 @@ fun TaskCard(
 
                 }
                 Column(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.dimen_20))) {
+
+
+                    if(taskStatus=="In QA Testing"){
+                        //qa task status and number
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "QA Task No",
+                                style = TextStyle_400_14,
+
+                            )
+
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.qa_task_no,
+                                style = TextStyle_400_14,
+                                color = Color.Red
+                            )
+
+
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "QA Task Status",
+                                style = TextStyle_400_14
+                            )
+
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.qa_task_status,
+                                style = TextStyle_400_14
+                            )
+
+
+                        }
+                    }
                     Row(
                         modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = "Assigned Date",
+                            text = if(taskStatus=="In QA Testing"){"Created Date" }else{"Assigned Date"},
                             style = TextStyle_400_14
                         )
-
 
                         Text(
                             modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
                             textAlign = TextAlign.Start,
-                            text = formatDate(list.assigned_date),
+                            text = if(taskStatus=="In QA Testing"){list.qa_created_on }else{formatDate(list.assigned_date)},
                             style = TextStyle_400_14,
                         )
 
@@ -326,71 +388,145 @@ fun TaskCard(
 
                     }
 
-                    Row(
-                        modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = "Allotted time",
-                            style = TextStyle_400_14
-                        )
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = list.taskTime + " Hours",
-                            style = TextStyle_600_14,
-                            color = ColorPrimary
-                        )
+                    // not required for QA Card
+                    if(!qaEnable) {
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "Allotted time",
+                                style = TextStyle_400_14
+                            )
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.taskTime + " Hours",
+                                style = TextStyle_600_14,
+                                color = ColorPrimary
+                            )
 
-                    }
+                        }
 
-                    Row(
-                        modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = "Total Time Taken",
-                            style = TextStyle_400_14
-                        )
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = list.time_taken + " Hours",
-                            style = TextStyle_600_14,
-                            color = if ((list.time_taken?.toDouble()
-                                    ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "Total Time Taken",
+                                style = TextStyle_400_14
+                            )
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.time_taken + " Hours",
+                                style = TextStyle_600_14,
+                                color = if ((list.time_taken?.toDouble()
+                                        ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                                ) {
+                                    Color.Red
+                                } else {
+                                    DarkGreenColor
+                                }
+
+                            )
+
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "Completed level",
+                                style = TextStyle_400_14
+                            )
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.completed_level + " %",
+                                style = TextStyle_500_14,
+                                color = if ((list.time_taken?.toDouble()
+                                        ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                                ) {
+                                    Color.Red
+                                } else {
+                                    DarkGreenColor
+                                }
+
+                            )
+
+                        }
+
+                        if(list.qa_task_status != "NA") {
+                            Row(
+                                modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Color.Red
-                            } else {
-                                DarkGreenColor
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "Remarks",
+                                    style = TextStyle_400_14
+                                )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = list.qa_task_status,
+                                    style = TextStyle_500_14,
+                                    color = if (list.qa_task_status != "NA"
+                                    ) {
+                                        if (taskStatus == "COMPLETED") {
+                                            DarkGreenColor
+                                        } else {
+                                            Color.Red
+                                        }
+                                    } else {
+                                        ColorPrimary
+                                    }
+                                )
                             }
 
-                        )
-
-                    }
-
-                    Row(
-                        modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = "Completed level",
-                            style = TextStyle_400_14
-                        )
-                        Text(
-                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                            text = list.completed_level + " %",
-                            style = TextStyle_500_14,
-                            color = if ((list.time_taken?.toDouble()
-                                    ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
+                            Row(
+                                modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Color.Red
-                            } else {
-                                DarkGreenColor
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "Reference",
+                                    style = TextStyle_400_14
+                                )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = list.qa_task_no,
+                                    style = TextStyle_500_14,
+                                    color = if (list.qa_task_status != "NA"
+                                    ) {
+                                        if (taskStatus == "COMPLETED") {
+                                            DarkGreenColor
+                                        } else {
+                                            Color.Red
+                                        }
+                                    } else {
+                                        ColorPrimary
+                                    }
+                                )
                             }
 
-                        )
+                            if (list.qa_created_on.isNullOrBlank().not()){
+                                Row(
+                                    modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    Text(
+                                        modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                        text = "QA updated on ${list.qa_created_on}",
+                                        style = TextStyle_400_12,
+                                        color = ColorPrimary
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(15.dp))
+                        }
 
                     }
 
@@ -433,410 +569,248 @@ fun TaskCard(
                                 )
                             }
                         }
+                        Spacer(modifier = Modifier.height(15.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Select Status:",
+                                style = TextStyle_400_14,
+                                modifier = Modifier.width(100.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Box(
+                                modifier = Modifier
+                                    .border(
+                                        0.5.dp,
+                                        color = ColorPrimary,
+                                        shape = RoundedCornerShape(4.27.dp)
+                                    )
+                                    .fillMaxWidth()
+                                    .height(35.dp)
+                            ) {
+                                ExposedDropdownMenuBox(
+                                    expanded = expandedStatus,
+                                    onExpandedChange = {
+                                        expandedStatus = !expandedStatus
+                                    }) {
+                                    ExposedDropdownMenu(expanded = expandedStatus,
+                                        onDismissRequest = { expandedStatus = false }) {
+                                        listStatusItems.forEach { selectedOption ->
+                                            DropdownMenuItem(onClick = {
+                                                selectedStatus = selectedOption
+                                                expandedStatus = false
+                                            }) {
+                                                Text(
+                                                    text = selectedOption,
+                                                    style = TextStyle_400_12,
+                                                    fontWeight = if (selectedOption == selectedStatus) FontWeight.Bold else null
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .padding(start = 8.dp, end = 15.dp)
+                                            .fillMaxSize()
+                                            .clickable {
+                                                expandedStatus = true
+                                            },
+
+                                        ) {
+                                        Text(
+                                            text = selectedStatus,
+                                            color = ColorPrimary,
+                                            style = TextStyle_400_12
+                                        )
+                                        Spacer(modifier = Modifier.height(15.dp))
+                                        Image(
+                                            painter = painterResource(id = R.drawable.down_arrow),
+                                            contentDescription = "down arrow"
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(10.dp))
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-//                            Text(
-//                                text = "Selected Time : ${startTime.value}  ${endTime.value}",
-//                                style = TextStyle_400_14,
-//                            )
 
-//                            Text(
-//                                text = "Working Hrs..",
-//                                style = TextStyle_400_14,
-//                                color = ColorPrimary
-//                            )
-//                            Row(
-//                                horizontalArrangement = Arrangement.Center
-//                            ) {
-//                                Box(modifier = Modifier
-//                                    .background(
-//                                        if (clickFullDay) ColorPrimary else Color.White,
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .border(
-//                                        BorderStroke(1.dp, ColorPrimary),
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .clickable {
-//                                        clickFullDay = true
-//                                        clickHalfDay = false
-//                                        clickCustom = false
-//                                        clickMorning = false
-//                                        clickAfterNoon = false
-//
-//                                    }
-//                                    .width(100.dp), contentAlignment = Alignment.Center) {
-//                                    Text(
-//                                        text = "Full day",
-//                                        style = TextStyle_500_12,
-//                                        color = if (clickFullDay) Color.White else ColorPrimary,
-//                                        modifier = Modifier.padding(vertical = 3.dp)
-//                                    )
-//                                }
-//
-//                                Spacer(modifier = Modifier.width(20.dp))
-//
-//                                Box(modifier = Modifier
-//                                    .background(
-//                                        if (clickHalfDay) ColorPrimary else Color.White,
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .border(
-//                                        BorderStroke(1.dp, ColorPrimary),
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .clickable {
-//                                        clickFullDay = false
-//                                        clickHalfDay = true
-//                                        clickCustom = false
-//                                        clickMorning = false
-//                                        clickAfterNoon = false
-//
-//                                    }
-//                                    .width(82.dp), contentAlignment = Alignment.Center) {
-//                                    Text(
-//                                        text = "Half day",
-//                                        style = TextStyle_400_12,
-//                                        color = if (clickHalfDay) Color.White else ColorPrimary,
-//                                        modifier = Modifier.padding(vertical = 3.dp)
-//                                    )
-//                                }
-//
-//                                Spacer(modifier = Modifier.width(20.dp))
-//
-//                                Box(modifier = Modifier
-//                                    .background(
-//                                        if (clickCustom) ColorPrimary else Color.White,
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .border(
-//                                        BorderStroke(1.dp, ColorPrimary),
-//                                        shape = RoundedCornerShape(7.dp)
-//                                    )
-//                                    .clickable {
-//                                        clickFullDay = false
-//                                        clickHalfDay = false
-//                                        clickCustom = true
-//                                        clickMorning = false
-//                                        clickAfterNoon = false
-//                                    }
-//                                    .width(82.dp), contentAlignment = Alignment.Center) {
-//                                    Text(
-//                                        text = "Custom",
-//                                        style = TextStyle_400_12,
-//                                        color = if (clickCustom) Color.White else ColorPrimary,
-//                                        modifier = Modifier.padding(vertical = 3.dp)
-//                                    )
-//                                }
-//                            }
-//
-//                            if (clickHalfDay) {
-//                                Column(
-//                                    verticalArrangement = Arrangement.Center,
-//                                    horizontalAlignment = Alignment.CenterHorizontally
-//                                ) {
-//                                    Text(
-//                                        text = "Select Session",
-//                                        style = TextStyle_400_14,
-//                                        color = ColorPrimary
-//                                    )
-//                                    Row(
-//                                        horizontalArrangement = Arrangement.Center
-//                                    ) {
-//                                        Box(modifier = Modifier
-//                                            .background(
-//                                                if (clickMorning) ColorPrimary else Color.White,
-//                                                shape = RoundedCornerShape(7.dp)
-//                                            )
-//                                            .border(
-//                                                BorderStroke(1.dp, ColorPrimary),
-//                                                shape = RoundedCornerShape(7.dp)
-//                                            )
-//                                            .clickable {
-//                                                clickMorning = true
-//                                                clickAfterNoon = false
-//
-//                                            }
-//                                            .width(100.dp), contentAlignment = Alignment.Center) {
-//                                            Text(
-//                                                text = "Morning",
-//                                                style = TextStyle_500_12,
-//                                                color = if (clickMorning) Color.White else ColorPrimary,
-//                                                modifier = Modifier.padding(vertical = 3.dp)
-//                                            )
-//                                        }
-//
-//                                        Spacer(modifier = Modifier.width(20.dp))
-//
-//                                        Box(modifier = Modifier
-//                                            .background(
-//                                                if (clickAfterNoon) ColorPrimary else Color.White,
-//                                                shape = RoundedCornerShape(7.dp)
-//                                            )
-//                                            .border(
-//                                                BorderStroke(1.dp, ColorPrimary),
-//                                                shape = RoundedCornerShape(7.dp)
-//                                            )
-//                                            .clickable {
-//                                                clickMorning = false
-//                                                clickAfterNoon = true
-//
-//                                            }
-//                                            .width(82.dp), contentAlignment = Alignment.Center) {
-//                                            Text(
-//                                                text = "After Noon",
-//                                                style = TextStyle_400_12,
-//                                                color = if (clickAfterNoon) Color.White else ColorPrimary,
-//                                                modifier = Modifier.padding(vertical = 3.dp)
-//                                            )
-//                                        }
-//                                    }
-//
-//                                    Spacer(modifier = Modifier.height(10.dp))
-//
-//                                }
-//                            }
+                            // TO DO Status not required time slot selection//
+                            if(selectedStatus!="TO DO") {
 
-                            //Spacer(modifier = Modifier.height(10.dp))
-
-                            if (clickCustom) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "Start Time : ", style = TextStyle_400_14,
-                                        modifier = Modifier.width(150.dp)
-                                    )
+                                if (clickCustom) {
                                     Row(
-                                        modifier = Modifier.width(150.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        //selectedFromDate = mTime.value
-                                        Box(
-                                            modifier = Modifier
-                                                .border(
-                                                    0.5.dp,
-                                                    color = ColorPrimary,
-                                                    shape = RoundedCornerShape(4.27.dp)
-                                                )
-                                                .width(100.dp)
-                                                .height(30.dp)
+                                        Text(
+                                            text = "Start Time : ", style = TextStyle_400_14,
+                                            modifier = Modifier.width(150.dp)
+                                        )
+                                        Row(
+                                            modifier = Modifier.width(150.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
                                         ) {
-                                            Text(
-                                                text = startTime.value.ifEmpty {
-                                                    currentTime24HHMM()
-                                                },
-                                                style = TextStyle_400_14,
-                                                modifier = Modifier.padding(5.dp)
+                                            //selectedFromDate = mTime.value
+                                            Box(
+                                                modifier = Modifier
+                                                    .border(
+                                                        0.5.dp,
+                                                        color = ColorPrimary,
+                                                        shape = RoundedCornerShape(4.27.dp)
+                                                    )
+                                                    .width(100.dp)
+                                                    .height(30.dp)
+                                            ) {
+                                                Text(
+                                                    text = startTime.value.ifEmpty {
+                                                        currentTime24HHMM()
+                                                    },
+                                                    style = TextStyle_400_14,
+                                                    modifier = Modifier.padding(5.dp)
+                                                )
+                                            }
+
+                                            Image(
+                                                painter = painterResource(id = R.drawable.calender_icon),
+                                                contentDescription = "calender icon",
+                                                modifier = Modifier.clickable {
+                                                    startTimePickerDialog.show()
+                                                }
                                             )
                                         }
+                                    }
 
-                                        Image(
-                                            painter = painterResource(id = R.drawable.calender_icon),
-                                            contentDescription = "calender icon",
-                                            modifier = Modifier.clickable {
-                                                startTimePickerDialog.show()
-                                            }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "End Time : ", style = TextStyle_400_14,
+                                            modifier = Modifier.width(150.dp)
                                         )
+                                        Row(
+                                            modifier = Modifier.width(150.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            //selectedFromDate = mTime.value
+                                            Box(
+                                                modifier = Modifier
+                                                    .border(
+                                                        0.5.dp,
+                                                        color = ColorPrimary,
+                                                        shape = RoundedCornerShape(4.27.dp)
+                                                    )
+                                                    .width(100.dp)
+                                                    .height(30.dp)
+                                            ) {
+                                                Text(
+                                                    text = endTime.value.ifEmpty {
+                                                        currentTime24HHMM()
+                                                    },
+                                                    style = TextStyle_400_14,
+                                                    modifier = Modifier.padding(5.dp)
+                                                )
+                                            }
+
+                                            Image(
+                                                painter = painterResource(id = R.drawable.calender_icon),
+                                                contentDescription = "calender icon",
+                                                modifier = Modifier.clickable {
+                                                    endTimePickerDialog.show()
+                                                }
+                                            )
+                                        }
                                     }
                                 }
-
                                 Spacer(modifier = Modifier.height(10.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "End Time : ", style = TextStyle_400_14,
-                                        modifier = Modifier.width(150.dp)
-                                    )
-                                    Row(
+                                        text = "Break hours",
+                                        style = TextStyle_400_14,
                                         modifier = Modifier.width(150.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                        color = Color.Red
+
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .width(80.dp)
+                                            .height(35.dp)
                                     ) {
-                                        //selectedFromDate = mTime.value
-                                        Box(
-                                            modifier = Modifier
-                                                .border(
-                                                    0.5.dp,
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedBreakHours,
+                                            onExpandedChange = {
+                                                expandedBreakHours = !expandedBreakHours
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedBreakHours,
+                                                onDismissRequest = { expandedBreakHours = false }) {
+                                                listBreakHours.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedBreakHours = selectedOption
+                                                        expandedBreakHours = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_14,
+                                                            fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedBreakHours = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedBreakHours,
                                                     color = ColorPrimary,
-                                                    shape = RoundedCornerShape(4.27.dp)
+                                                    style = TextStyle_400_12
                                                 )
-                                                .width(100.dp)
-                                                .height(30.dp)
-                                        ) {
-                                            Text(
-                                                text = endTime.value.ifEmpty {
-                                                    currentTime24HHMM()
-                                                },
-                                                style = TextStyle_400_14,
-                                                modifier = Modifier.padding(5.dp)
-                                            )
-                                        }
-
-                                        Image(
-                                            painter = painterResource(id = R.drawable.calender_icon),
-                                            contentDescription = "calender icon",
-                                            modifier = Modifier.clickable {
-                                                endTimePickerDialog.show()
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
                                             }
-                                        )
+                                        }
                                     }
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Text(
+                                        text = "Hrs",
+                                        style = TextStyle_400_14,
+                                    )
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Break hours",
-                                    style = TextStyle_400_14,
-                                    modifier = Modifier.width(150.dp),
-                                    color = Color.Red
-
-                                )
-
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .border(
-                                            0.5.dp,
-                                            color = ColorPrimary,
-                                            shape = RoundedCornerShape(4.27.dp)
-                                        )
-                                        .width(80.dp)
-                                        .height(35.dp)
-                                ) {
-                                    ExposedDropdownMenuBox(
-                                        expanded = expandedBreakHours,
-                                        onExpandedChange = {
-                                            expandedBreakHours = !expandedBreakHours
-                                        }) {
-                                        ExposedDropdownMenu(expanded = expandedBreakHours,
-                                            onDismissRequest = { expandedBreakHours = false }) {
-                                            listBreakHours.forEach { selectedOption ->
-                                                DropdownMenuItem(onClick = {
-                                                    selectedBreakHours = selectedOption
-                                                    expandedBreakHours = false
-                                                }) {
-                                                    Text(
-                                                        text = selectedOption,
-                                                        style = TextStyle_400_14,
-                                                        fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .padding(start = 8.dp, end = 15.dp)
-                                                .fillMaxSize()
-                                                .clickable {
-                                                    expandedBreakHours = true
-                                                },
-
-                                            ) {
-                                            Text(
-                                                text = selectedBreakHours,
-                                                color = ColorPrimary,
-                                                style = TextStyle_400_12
-                                            )
-                                            Spacer(modifier = Modifier.height(15.dp))
-                                            Image(
-                                                painter = painterResource(id = R.drawable.down_arrow),
-                                                contentDescription = "down arrow"
-                                            )
-                                        }
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = "Hrs",
-                                    style = TextStyle_400_14,
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "Select Status:",
-                                    style = TextStyle_400_14,
-                                    modifier = Modifier.width(100.dp)
-                                )
-
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .border(
-                                            0.5.dp,
-                                            color = ColorPrimary,
-                                            shape = RoundedCornerShape(4.27.dp)
-                                        )
-                                        .fillMaxWidth()
-                                        .height(35.dp)
-                                ) {
-                                    ExposedDropdownMenuBox(
-                                        expanded = expandedStatus,
-                                        onExpandedChange = {
-                                            expandedStatus = !expandedStatus
-                                        }) {
-                                        ExposedDropdownMenu(expanded = expandedStatus,
-                                            onDismissRequest = { expandedStatus = false }) {
-                                            listStatusItems.forEach { selectedOption ->
-                                                DropdownMenuItem(onClick = {
-                                                    selectedStatus = selectedOption
-                                                    expandedStatus = false
-                                                }) {
-                                                    Text(
-                                                        text = selectedOption,
-                                                        style = TextStyle_400_12,
-                                                        fontWeight = if (selectedOption == selectedStatus) FontWeight.Bold else null
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier
-                                                .padding(start = 8.dp, end = 15.dp)
-                                                .fillMaxSize()
-                                                .clickable {
-                                                    expandedStatus = true
-                                                },
-
-                                            ) {
-                                            Text(
-                                                text = selectedStatus,
-                                                color = ColorPrimary,
-                                                style = TextStyle_400_12
-                                            )
-                                            Spacer(modifier = Modifier.height(15.dp))
-                                            Image(
-                                                painter = painterResource(id = R.drawable.down_arrow),
-                                                contentDescription = "down arrow"
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            if(selectedStatus=="COMPLETED") {
+                            if(selectedStatus=="In QA Testing") {
                                 Spacer(modifier = Modifier.height(10.dp))
 
                                 Row(
@@ -1023,6 +997,234 @@ fun TaskCard(
                             Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
+                    if(qaCardExpand){
+                        Spacer(modifier = Modifier.height(15.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = " Date : ", style = TextStyle_400_14,
+                                modifier = Modifier.width(150.dp)
+                            )
+                            Row(
+                                modifier = Modifier.width(150.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                selectedDate = date.value
+                                Box(
+                                    modifier = Modifier
+                                        .border(
+                                            0.5.dp,
+                                            color = ColorPrimary,
+                                            shape = RoundedCornerShape(4.27.dp)
+                                        )
+                                        .width(100.dp)
+                                        .height(30.dp)
+                                ) {
+                                    Text(text = formatDate(selectedDate).ifEmpty {
+                                        currentDate()
+                                    }, style = TextStyle_400_14, modifier = Modifier.padding(5.dp))
+                                }
+
+                                Image(
+                                    painter = painterResource(id = R.drawable.calender_icon),
+                                    contentDescription = "calender icon",
+                                    modifier = Modifier.clickable {
+                                        datePickerDialog.show()
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Select QA Status:",
+                                    style = TextStyle_400_14,
+                                    modifier = Modifier.width(100.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .border(
+                                            0.5.dp,
+                                            color = ColorPrimary,
+                                            shape = RoundedCornerShape(4.27.dp)
+                                        )
+                                        .fillMaxWidth()
+                                        .height(35.dp)
+                                ) {
+                                    ExposedDropdownMenuBox(
+                                        expanded = expandedQAStatus,
+                                        onExpandedChange = {
+                                            expandedQAStatus = !expandedQAStatus
+                                        }) {
+                                        ExposedDropdownMenu(expanded = expandedQAStatus,
+                                            onDismissRequest = { expandedQAStatus = false }) {
+                                            listQAStatusItems.forEach { selectedOption ->
+                                                DropdownMenuItem(onClick = {
+                                                    selectedQAStatus = selectedOption
+                                                    expandedQAStatus = false
+                                                }) {
+                                                    Text(
+                                                        text = selectedOption,
+                                                        style = TextStyle_400_12,
+                                                        fontWeight = if (selectedOption == selectedQAStatus) FontWeight.Bold else null
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .padding(start = 8.dp, end = 15.dp)
+                                                .fillMaxSize()
+                                                .clickable {
+                                                    expandedQAStatus = true
+                                                },
+
+                                            ) {
+                                            Text(
+                                                text = selectedQAStatus,
+                                                color = ColorPrimary,
+                                                style = TextStyle_400_12
+                                            )
+                                            Spacer(modifier = Modifier.height(15.dp))
+                                            Image(
+                                                painter = painterResource(id = R.drawable.down_arrow),
+                                                contentDescription = "down arrow"
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(selectedQAStatus=="QA Testing Progress" || (selectedQAStatus=="QA Testing Failed")) {
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select completed level in %",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(200.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedLevel,
+                                            onExpandedChange = {
+                                                expandedLevel = !expandedLevel
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedLevel,
+                                                onDismissRequest = { expandedLevel = false }) {
+                                                listLevelItems.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedLevel = selectedOption
+                                                        expandedLevel = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedLevel) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedLevel = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedLevel,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_10)))
+                            Box(
+                                modifier = Modifier
+                                    .width(311.dp)
+                                    //.background(LightBlue)
+                                    .background(
+                                        Color.White,
+                                        shape = RoundedCornerShape(7.dp)
+                                    )
+                                    .border(
+                                        BorderStroke(1.dp, ColorPrimary),
+                                        shape = RoundedCornerShape(7.dp)
+                                    )
+                            ) {
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier.padding(dimensionResource(id = R.dimen.dimen_5))
+                                ) {
+                                    Text(
+                                        text = "Job done",
+                                        color = TextColor,
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.align(Alignment.Start)
+                                    )
+                                    Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_2)))
+                                    BasicTextField(
+                                        value = textJobeDone,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .align(Alignment.Start)
+                                            .focusRequester(focusRequester),
+                                        onValueChange = {
+
+                                            textJobeDone = it
+                                            //                 viewModel.isValidUsername(it)
+                                        },
+                                        textStyle = TextStyle_500_16,
+                                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                                    )
+
+                                }
+                            }
+                        }
+                    }
 
                 }
 
@@ -1038,21 +1240,97 @@ fun TaskCard(
                                 .fillMaxWidth()
                                 .height(dimensionResource(id = R.dimen.dimen_50))
                                 .clickable {
-                                           viewModel.updateTaskStatus(
-                                               TaskUpdateRequest(
-                                                   task_status = "IN PROGRESS",
-                                                   updated_date = currentDateApi(),
-                                                   entry_date = currentDateApi(), task_name = list.task_name
-                                               ),id= list.id, onSuccess = {
-                                                   onStatusUpdate.invoke()
-                                               }
-                                           )
+
+                                    isMoveInProgress = true
                                 }, contentAlignment = Alignment.Center
                         ) {
 
                             if (viewModel.state.value.isLoading.not()) {
                                 Text(
                                     text = "Move to In Progress",
+                                    style = TextStyle_500_14,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(
+                                        top = dimensionResource(
+                                            id = R.dimen.dimen_3
+                                        )
+                                    )
+                                )
+                            }else {
+
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if(qaEnable){
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(top = dimensionResource(id = R.dimen.dimen_15))
+                                .background(ColorPrimary)
+                                .fillMaxWidth()
+                                .height(dimensionResource(id = R.dimen.dimen_50))
+                                .clickable {
+                                    qaCardExpand = true
+                                    clickCount++
+                                    if (textJobeDone != ""
+                                        && selectedQAStatus != ""
+                                        && selectedLevel != "Select level"
+                                    ) {
+                                        viewModel.saveQaTaskStatus(
+                                            QaTaskRequest(
+                                                createdBy = list.staff_id,
+                                                createdOn = currentDateApi() + " " + currentTime24(),
+                                                date = selectedDate,
+                                                jiraNo = list.task_jira_no,
+                                                jobDone = textJobeDone,
+                                                projectName = list.project_name,
+                                                staffName = list.staff_name,
+                                                taskDetails = list.task_details,
+                                                taskNo = list.task_name,
+                                                taskStatus ="In QA Testing",
+                                                id = list.id,
+                                                completedLevel = selectedLevel,
+                                                qaTaskStatus = selectedQAStatus,
+                                                qaTaskNo = list.qa_task_no
+                                        ), onSuccess = {
+                                                clickCount = 0
+                                                viewModel.state.value.taskList = null
+                                                onStatusUpdate.invoke()
+                                                qaCardExpand = false
+                                            }
+                                        )
+
+                                    } else {
+                                        println("card-expand $qaCardExpand")
+
+                                        if (clickCount != 1) {
+                                            Toast
+                                                .makeText(
+                                                    context,
+                                                    "Please fill all data correctly!!",
+                                                    Toast.LENGTH_LONG
+                                                )
+                                                .show()
+                                        }
+
+                                    }
+
+                                }, contentAlignment = Alignment.Center
+                        ) {
+
+                            if (viewModel.state.value.isLoading.not()) {
+                                Text(
+                                    text = "Update",
                                     style = TextStyle_500_14,
                                     color = Color.White,
                                     modifier = Modifier.padding(
@@ -1090,9 +1368,11 @@ fun TaskCard(
                                     if (textJobeDone != ""
                                         && startTime.value.isNotEmpty()
                                         && endTime.value.isNotEmpty()
+                                        && selectedLevel.isNotEmpty()
                                         && selectedStatus != "Select status"
                                         && selectedBreakHours != "Select"
-                                        && startTime.value != endTime.value) {
+                                        && startTime.value != endTime.value
+                                    ) {
 
                                         viewModel.saveTaskStatus(
                                             taskStatusRequest = TaskStatusRequest(
@@ -1118,7 +1398,7 @@ fun TaskCard(
                                                 work_at = workAt.value,
                                                 id = list.id,
                                                 completed_level = selectedLevel,
-                                                break_hours = (selectedBreakHours.toDouble()*60).toString()
+                                                break_hours = (selectedBreakHours.toDouble() * 60).toString()
                                             ), onSuccess = {
                                                 clickCount = 0
                                                 viewModel.state.value.taskList = null
@@ -1126,11 +1406,17 @@ fun TaskCard(
                                                 cardExpand = false
                                             }
                                         )
-                                    }else{
+                                    } else {
                                         println("card-expand $cardExpand")
 
-                                        if(clickCount !=1){
-                                            Toast.makeText(context,"Please fill all data correctly!!",Toast.LENGTH_LONG).show()
+                                        if (clickCount != 1) {
+                                            Toast
+                                                .makeText(
+                                                    context,
+                                                    "Please fill all data correctly!!",
+                                                    Toast.LENGTH_LONG
+                                                )
+                                                .show()
                                         }
 
                                     }
@@ -1167,8 +1453,36 @@ fun TaskCard(
         Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_20)))
 
     }
+    
+    if(isMoveInProgress){
+        ConfirmAlertDialog(showDialog =remember { mutableStateOf(isMoveInProgress) } ,
+            onConfirm = {
+                isMoveInProgress = false
+                viewModel.updateTaskStatus(
+                    TaskUpdateRequest(
+                        task_status = "IN PROGRESS",
+                        updated_date = currentDateApi(),
+                        entry_date = currentDateApi(),
+                        task_name = list.task_name
+                    ), id = list.id, onSuccess = {
+                        onStatusUpdate.invoke()
+                    }
+                ) }, onCancel = {
+                isMoveInProgress = false
+            })
+        
+    }
 
-    if(selectedStatus=="COMPLETED"){
+    if(selectedQAStatus== "Ready for QA Testing" || selectedQAStatus == "Refinement not ready" ){
+        selectedLevel = "0"
+    }
+
+    if(selectedQAStatus== "QA Testing Passed"){
+        selectedLevel = "100"
+    }
+
+
+    if(selectedStatus=="In QA Testing"){
         selectedLevel = "100"
         selectedQAStatus = "Ready for QA Testing"
     }
@@ -1176,6 +1490,15 @@ fun TaskCard(
     if(selectedStatus=="IN PROGRESS"){
         selectedLevel = ""
         selectedQAStatus = "Development in progress"
+    }
+
+    if(selectedStatus=="TO DO"){
+        selectedLevel = "0"
+        selectedQAStatus = "Development not started"
+        startTime.value = "09:30"
+        endTime.value = "09:35"
+        dayType.value = "-NA-"
+        selectedBreakHours = "0"
     }
 
     if (clickFullDay) {
@@ -1203,6 +1526,49 @@ fun TaskCard(
     }
     if (clickCustom) {
         dayType.value = "Hourly"
+    }
+}
+
+@Composable
+fun ConfirmAlertDialog(
+    showDialog: MutableState<Boolean>,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = {
+                // Handle dismiss request (e.g., pressing outside the dialog)
+                onCancel()
+                showDialog.value = false
+            },
+            title = {
+                Text(text = "Confirm Move Task",style = TextStyle_600_14, color = ColorPrimary)
+            },
+            text = {
+                Text(text = "Are you sure you want to proceed?",style = TextStyle_500_12, color = ColorPrimary)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onConfirm()
+                        showDialog.value = false
+                    }
+                ) {
+                    Text("Confirm",style = TextStyle_500_12, color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        onCancel()
+                        showDialog.value = false
+                    }
+                ) {
+                    Text("Cancel",style = TextStyle_500_12, color = ColorPrimary)
+                }
+            }
+        )
     }
 }
 

@@ -222,22 +222,22 @@ fun AdminHomeScreen(
                             )
 
 
-                            if (state.taskCount?.get(0)?.todo_count.isNullOrBlank().not()){
+                            if (state.taskCount?.get(0)?.todoCount.isNullOrBlank().not()){
                             if (state.isTaskCount!!) {
                                 Text(
                                     text = if (state.isTaskCount!!) {
-                                        state.taskCount?.get(0)?.todo_count!! + " Tasks"
+                                        state.taskCount?.get(0)?.todoCount!! + " Tasks"
                                     } else {
                                         "0 Tasks"
                                     }, style = TextStyle_600_12,
-                                    color = if (state.taskCount?.get(0)?.todo_count!!.toInt() != 0) {
+                                    color = if (state.taskCount?.get(0)?.todoCount!!.toInt() != 0) {
                                         Color.Red
                                     } else {
                                         DarkGreen
                                     },
                                     modifier = Modifier
                                         .offset(
-                                            x = if (state.taskCount?.get(0)?.todo_count!!.toInt() != 0) {
+                                            x = if (state.taskCount?.get(0)?.todoCount!!.toInt() != 0) {
                                                 animatedOffsetX.dp
                                             } else {
                                                 0.dp
@@ -302,22 +302,22 @@ fun AdminHomeScreen(
                             text = "In Progress", style = TextStyle_800_18
                         )
 
-                        if(state.taskCount?.get(0)?.in_progress_count.isNullOrBlank().not()) {
+                        if(state.taskCount?.get(0)?.inProgressCount.isNullOrBlank().not()) {
                         if(state.isTaskCount!!) {
                             Text(
                                 text = if (state.isTaskCount!!) {
-                                    state.taskCount?.get(0)?.in_progress_count!! + " Tasks"
+                                    state.taskCount?.get(0)?.inProgressCount!! + " Tasks"
                                 } else {
                                     "0 Tasks"
                                 }, style = TextStyle_600_12,
-                                color = if (state.taskCount?.get(0)?.in_progress_count!!.toInt() != 0) {
+                                color = if (state.taskCount?.get(0)?.inProgressCount!!.toInt() != 0) {
                                     Color.Red
                                 } else {
                                     DarkGreen
                                 },
                                 modifier = Modifier
                                     .offset(
-                                        x = if (state.taskCount?.get(0)?.in_progress_count!!.toInt() != 0) {
+                                        x = if (state.taskCount?.get(0)?.inProgressCount!!.toInt() != 0) {
                                             animatedOffsetX.dp
                                         } else {
                                             0.dp
@@ -380,11 +380,11 @@ fun AdminHomeScreen(
                                 text = "Done", style = TextStyle_800_18
                             )
 
-                            if(state.taskCount?.get(0)?.completed_count.isNullOrBlank().not()) {
+                            if(state.taskCount?.get(0)?.completedCount.isNullOrBlank().not()) {
                                 if (state.isTaskCount!!) {
                                     Text(
                                         text = if (state.isTaskCount!!) {
-                                            state.taskCount?.get(0)?.completed_count!! + " Tasks"
+                                            state.taskCount?.get(0)?.completedCount!! + " Tasks"
                                         } else {
                                             "0 Tasks"
                                         }, style = TextStyle_600_12,

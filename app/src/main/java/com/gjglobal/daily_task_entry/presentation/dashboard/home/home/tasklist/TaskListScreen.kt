@@ -123,6 +123,7 @@ fun TaskListScreen(
             Spacer(modifier = Modifier.width(20.dp))
 
                 val taskList1 by viewModel.taskList.collectAsState()
+
                 if (taskList1.isNotEmpty()) {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(taskList1) { item ->
@@ -142,7 +143,8 @@ fun TaskListScreen(
                                     )
                                 },list = item,
                                 viewModel,buttonEnable = true,
-                            taskStatus = "IN PROGRESS" , onStatusUpdate = {})
+                                taskStatus = "IN PROGRESS" , onStatusUpdate = {},
+                                qaEnable = false)
                         }
                         item {
                             InProgressList(viewModel = viewModel, navController = navController)

@@ -149,10 +149,17 @@ fun Navigation(
             LeaveScreen(navController = navController,activity = activity, dashViewModel = viewModel)
         }
 
+
         composable(
             route = Screen.TaskListCompleteViewScreen.route
         ) {
             TaskListViewScreen(navController = navController,activity = activity, dashViewModel = viewModel, taskStatus = "COMPLETED")
+        }
+
+        composable(
+            route = Screen.TaskListQaReadyViewScreen.route
+        ) {
+            TaskListViewScreen(navController = navController,activity = activity, dashViewModel = viewModel, taskStatus = "In QA Testing")
         }
 
         composable(

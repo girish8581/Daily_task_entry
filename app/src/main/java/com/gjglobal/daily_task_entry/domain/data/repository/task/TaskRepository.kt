@@ -15,12 +15,16 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
 import okhttp3.ResponseBody
 import java.io.File
 
@@ -29,6 +33,8 @@ interface TaskRepository {
     suspend fun getTaskListing(taskListRequest: TaskListRequest): TaskListResponse
 
     suspend fun saveTaskStatus(taskStatusRequest: TaskStatusRequest):TaskStatusResponse
+
+    suspend fun saveQaTaskStatus(qaTaskRequest: QaTaskRequest):TaskStatusResponse
 
     suspend fun updateTaskStatus(taskUpdateRequest: TaskUpdateRequest, id:String):TaskStatusUpdateResponse
 
@@ -46,10 +52,13 @@ interface TaskRepository {
 
     suspend fun addNewTask(addNewTaskRequest: AddNewTaskRequest):ApiCreateResponse
 
+    suspend fun getNewTaskList(staffName:String):NewTaskResponse
+
     suspend fun addTaskMapping(taskMappingRequest: TaskMappingRequest):ApiCreateResponse
 
     suspend fun getRecentUpdates(recentUpdateRequest: RecentUpdateRequest):RecentUpdateResponse
 
+    suspend fun getRecentQaUpdates(recentUpdateQaRequest: RecentUpdateQaRequest):RecentUpdateQaResponse
     suspend fun getTasksCount(taskCountSummaryRequest: taskCountSummaryRequest):TaskSummaryCountResponse
 
     suspend fun getStaffTaskDateWise(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): StaffTaskDateWiseResponse

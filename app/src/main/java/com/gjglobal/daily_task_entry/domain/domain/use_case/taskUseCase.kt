@@ -17,12 +17,16 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.ResponseBody
@@ -113,6 +117,22 @@ class TaskListUseCase @Inject constructor(
             }
         }
 
+
+    fun getNewTaskList(staffName:String):Flow<Resource<NewTaskResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getNewTaskList(staffName = staffName )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+
+        }
     fun getTasksProjectName(project_name: String): Flow<Resource<TaskMasterResponse>?> =
         flow {
             try {
@@ -196,6 +216,24 @@ class TaskListUseCase @Inject constructor(
             }
         }
 
+    fun saveQaTaskStatus(qaTaskRequest: QaTaskRequest): Flow<Resource<TaskStatusResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.saveQaTaskStatus(
+                    qaTaskRequest = qaTaskRequest
+                )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+
     fun addNewTask(addNewTaskRequest: AddNewTaskRequest ): Flow<Resource<ApiCreateResponse>?> =
         flow {
             try {
@@ -252,6 +290,23 @@ class TaskListUseCase @Inject constructor(
                 emit(Resource.Loading())
                 val apiResponse = repository.getRecentUpdates(
                     recentUpdateRequest = recentUpdateRequest
+                )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+    fun getRecentQaUpdates(recentUpdateQaRequest: RecentUpdateQaRequest): Flow<Resource<RecentUpdateQaResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getRecentQaUpdates(
+                    recentUpdateQaRequest = recentUpdateQaRequest
                 )
                 emit(Resource.Success(apiResponse))
             } catch (e: HttpException) {

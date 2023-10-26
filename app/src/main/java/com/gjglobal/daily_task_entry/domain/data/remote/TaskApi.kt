@@ -16,23 +16,24 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TaskApi {
@@ -45,8 +46,12 @@ interface TaskApi {
 
     //http://65.1.250.239/services/createTask.php
 
+    @POST("services/createQaTask.php")
+    suspend fun saveQATaskStatus(@Body qaTaskRequest: QaTaskRequest): TaskStatusResponse
+
     @POST("services/createDailyTask.php")
     suspend fun saveTaskStatus(@Body taskStatusRequest: TaskStatusRequest): TaskStatusResponse
+
 
     @POST("services/createTaskMapping.php")
     suspend fun addTaskMapping(@Body taskMappingRequest: TaskMappingRequest): ApiCreateResponse
@@ -73,6 +78,10 @@ interface TaskApi {
     suspend fun getTasksProjectName(@Query("project_name") projectName: String): TaskMasterResponse
 
 
+    @GET("services/getTaskMaster.php") // new task list api//
+    suspend fun getNewTaskList(@Query("staff_name") staffName: String): NewTaskResponse
+
+
     @GET("services/getTaskData.php")
     suspend fun getTaskData(@Query("task_name") taskName: String): TaskDataResponse
 
@@ -81,6 +90,9 @@ interface TaskApi {
 
     @POST("services/getRecentUpdates.php")
     suspend fun getRecentUpdates(@Body recentUpdateRequest: RecentUpdateRequest): RecentUpdateResponse
+
+    @POST("services/getRecentQaUpdates.php")
+    suspend fun getQaRecentUpdates(@Body recentUpdateQaRequest: RecentUpdateQaRequest): RecentUpdateQaResponse
 
     @POST("services/getTaskCount.php")
     suspend fun getTasksCount(@Body taskCountSummaryRequest: taskCountSummaryRequest): TaskSummaryCountResponse

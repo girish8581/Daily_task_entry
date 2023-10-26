@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaItem
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskItem
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,23 @@ class TaskViewModel @Inject constructor(
     private val _projectList = MutableStateFlow(listOf<ProjectData>())
     private var _searchText = MutableStateFlow("")
     var searchText = _searchText.asStateFlow()
+    private val _newTaskList = MutableStateFlow(listOf<NewTaskItem>())
+
+    var newTaskList = searchText
+        .combine(_newTaskList) { text, newTaskList ->
+            if (text.isBlank()) {
+                newTaskList
+            } else {
+                newTaskList.filter {
+                    it.doesMatchSearchQuery(text)
+                }
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            _newTaskList.value
+        )
 
     var taskList = searchText
         .combine(_projectList) { text, taskList ->
@@ -142,6 +161,41 @@ class TaskViewModel @Inject constructor(
                     Log.i("status error",result.data.toString())
                     _state.value = _state.value.copy(
                         isLoading = false,isAddNewTask=false,
+                        error = result.message ?: "An unexpected error occurred",
+                    )
+                }
+
+                is Resource.Loading -> {
+                    Log.e("loading", "")
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+
+
+
+
+    fun getNewTaskList(staffName:String) {
+        taskListUseCase.getNewTaskList(
+            staffName = staffName
+        ).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    Log.i("status succuss",result.data.toString())
+                    if (result.data != null) {
+                        _state.value =
+                            _state.value.copy(isLoading = false, isGetNewTask = true, newTaskList = result.data.data)
+                    }
+                }
+
+                is Resource.Error -> {
+                    Log.i("status error",result.data.toString())
+                    _state.value = _state.value.copy(
+                        isLoading = false,isGetNewTask=false,
                         error = result.message ?: "An unexpected error occurred",
                     )
                 }

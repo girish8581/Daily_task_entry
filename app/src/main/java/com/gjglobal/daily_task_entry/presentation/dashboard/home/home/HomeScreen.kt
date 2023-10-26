@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -68,16 +69,13 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_18
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_20
-import com.gjglobal.daily_task_entry.presentation.theme.TimeColor
 import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.inProgressColor
-import com.gjglobal.daily_task_entry.presentation.theme.todoColor
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
-import okhttp3.ResponseBody
 import java.io.File
 
 @Composable
-fun HomeScreen(
+fun HomeScreenOld(
     navController: NavController,
     activity: Activity,
     dashViewModel: DashboardViewModel,
@@ -103,7 +101,7 @@ fun HomeScreen(
         animationSpec = infiniteRepeatable(
             animation = tween(3000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
-        )
+        ), label = ""
     )
 
 //    if (animatedOffsetX >= 300f || animatedOffsetX <= -300f) {
@@ -137,6 +135,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(ColorPrimary)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
 
@@ -168,12 +167,11 @@ fun HomeScreen(
                             modifier = Modifier.padding(horizontal = 30.dp)
 
                         ) {
-
                             Text(
-                                text = staffName!!, style = TextStyle_800_18
+                                text = staffName!!, style = TextStyle_800_18,color = White
                             )
                             Text(
-                                text = designation!!, style = TextStyle_400_12
+                                text = designation!!, style = TextStyle_400_12,color = White
                             )
                         }
 
@@ -182,7 +180,7 @@ fun HomeScreen(
             }
 
             Text(
-                text = "My Tasks", style = TextStyle_800_20, modifier = Modifier.padding(horizontal = 20.dp)
+                text = "My Tasks", style = TextStyle_800_20, color = White,modifier = Modifier.padding(horizontal = 20.dp)
             )
 
             Card(
@@ -196,11 +194,10 @@ fun HomeScreen(
                     },
                 shape = RoundedCornerShape(20.dp),
             ) {
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(todoColor)
+                        .background(White)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Start,
@@ -235,22 +232,22 @@ fun HomeScreen(
                             )
 
 
-                            if (state.taskCount?.get(0)?.todo_count.isNullOrBlank().not()){
+                            if (state.taskCount?.get(0)?.todoCount.isNullOrBlank().not()){
                             if (state.isTaskCount!!) {
                                 Text(
                                     text = if (state.isTaskCount!!) {
-                                        state.taskCount?.get(0)?.todo_count!! + " Tasks"
+                                        state.taskCount?.get(0)?.todoCount!! + " Tasks"
                                     } else {
                                         "0 Tasks"
                                     }, style = TextStyle_600_12,
-                                    color = if (state.taskCount?.get(0)?.todo_count!!.toInt() != 0) {
+                                    color = if (state.taskCount?.get(0)?.todoCount!!.toInt() != 0) {
                                         Color.Red
                                     } else {
                                         DarkGreen
                                     },
                                     modifier = Modifier
                                         .offset(
-                                            x = if (state.taskCount?.get(0)?.todo_count!!.toInt() != 0) {
+                                            x = if (state.taskCount?.get(0)?.todoCount!!.toInt() != 0) {
                                                 animatedOffsetX.dp
                                             } else {
                                                 0.dp
@@ -271,8 +268,6 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        //navController.navigate(Screen.ForgotPasswordScreen.route)
-
                         navController.navigate(Screen.TaskListScreen.route)
                     }
                     .padding(
@@ -315,22 +310,22 @@ fun HomeScreen(
                             text = "In Progress", style = TextStyle_800_18
                         )
 
-                        if(state.taskCount?.get(0)?.in_progress_count.isNullOrBlank().not()) {
+                        if(state.taskCount?.get(0)?.inProgressCount.isNullOrBlank().not()) {
                         if(state.isTaskCount!!) {
                             Text(
                                 text = if (state.isTaskCount!!) {
-                                    state.taskCount?.get(0)?.in_progress_count!! + " Tasks"
+                                    state.taskCount?.get(0)?.inProgressCount!! + " Tasks"
                                 } else {
                                     "0 Tasks"
                                 }, style = TextStyle_600_12,
-                                color = if (state.taskCount?.get(0)?.in_progress_count!!.toInt() != 0) {
+                                color = if (state.taskCount?.get(0)?.inProgressCount!!.toInt() != 0) {
                                     Color.Red
                                 } else {
                                     DarkGreen
                                 },
                                 modifier = Modifier
                                     .offset(
-                                        x = if (state.taskCount?.get(0)?.in_progress_count!!.toInt() != 0) {
+                                        x = if (state.taskCount?.get(0)?.inProgressCount!!.toInt() != 0) {
                                             animatedOffsetX.dp
                                         } else {
                                             0.dp
@@ -392,11 +387,11 @@ fun HomeScreen(
                                 text = "Under QA", style = TextStyle_800_18
                             )
 
-                            if(state.taskCount?.get(0)?.completed_count.isNullOrBlank().not()) {
+                            if(state.taskCount?.get(0)?.completedCount.isNullOrBlank().not()) {
                                 if (state.isTaskCount!!) {
                                     Text(
                                         text = if (state.isTaskCount!!) {
-                                            state.taskCount?.get(0)?.completed_count!! + " Tasks"
+                                            state.taskCount?.get(0)?.completedCount!! + " Tasks"
                                         } else {
                                             "0 Tasks"
                                         }, style = TextStyle_600_12,
@@ -457,11 +452,11 @@ fun HomeScreen(
                                 text = "QA Passed", style = TextStyle_800_18
                             )
 
-                            if(state.taskCount?.get(0)?.completed_count.isNullOrBlank().not()) {
+                            if(state.taskCount?.get(0)?.completedCount.isNullOrBlank().not()) {
                                 if (state.isTaskCount!!) {
                                     Text(
                                         text = if (state.isTaskCount!!) {
-                                            state.taskCount?.get(0)?.completed_count!! + " Tasks"
+                                            state.taskCount?.get(0)?.completedCount!! + " Tasks"
                                         } else {
                                             "0 Tasks"
                                         }, style = TextStyle_600_12,
@@ -618,9 +613,9 @@ fun ProfileImagePicker(
                     modifier = Modifier
                         .size(90.dp)
                         .padding(10.dp)
-                                            .clickable {
-                        launcher.launch("image/*")
-                    }
+                        .clickable {
+                            launcher.launch("image/*")
+                        }
                 )
     }
 }
@@ -634,7 +629,7 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
             CircularProgressIndicator(
                 color = Color.Green,
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(30.dp)
             )
         }
     }else{
@@ -657,10 +652,11 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
                 modifier = Modifier
                     .padding(
                         vertical = dimensionResource(
-                            id = R.dimen.dimen_10
-                        )
+                            id = R.dimen.dimen_15
+                        ),
+                        horizontal = dimensionResource(id = R.dimen.dimen_20)
                     )
-                    .size(dimensionResource(id = R.dimen.dimen_70))
+                    .size(dimensionResource(id = R.dimen.dimen_50))
                     .clip(CircleShape)
                     .fillMaxSize()
                     .aspectRatio(1f),
@@ -668,8 +664,5 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
             )
         }
     }
-
-
-
     }
 

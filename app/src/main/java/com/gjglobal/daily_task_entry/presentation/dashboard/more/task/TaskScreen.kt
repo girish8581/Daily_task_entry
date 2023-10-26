@@ -2,8 +2,10 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.more.task
 
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -21,6 +23,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -32,6 +36,7 @@ import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +59,7 @@ import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskItem
 import com.gjglobal.daily_task_entry.presentation.components.Messagebox
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.components.ToolBar
@@ -66,17 +72,22 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
+import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
+import com.gjglobal.daily_task_entry.presentation.theme.doneColor
 import com.gjglobal.daily_task_entry.presentation.theme.lightestBlue
+import com.gjglobal.daily_task_entry.presentation.theme.todoColor
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
 import com.gjglobal.daily_task_entry.presentation.utils.currentTime24
+import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.util.Calendar
 import java.util.Date
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun TaskScreen(
+fun TaskScreenOld(
     navController: NavController,
     activity: Activity,
     dashViewModel: DashboardViewModel,
@@ -160,6 +171,7 @@ fun TaskScreen(
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
                 viewModel.getProjects()
+                viewModel.getNewTaskList(staffName = userData?.staff_name!!)
                 dashViewModel.hideBottomMenu(true)
             }
 
@@ -192,7 +204,11 @@ fun TaskScreen(
 
 
             Box(modifier = Modifier.fillMaxSize()) {
-                Column() {
+                Column {
+                    //NewlyAddedTasks(viewModel=viewModel)
+
+
+
                     Spacer(modifier = Modifier.height(15.dp))
                     Card(
                         modifier = Modifier
@@ -326,7 +342,8 @@ fun TaskScreen(
                                                         CircularProgressIndicator(
                                                             color = ColorPrimary,
                                                             modifier = Modifier
-                                                                .size(20.dp)
+                                                                .size(20.dp),
+                                                            strokeWidth = 2.dp
                                                         )
                                                     }
 
@@ -930,13 +947,18 @@ fun TaskScreen(
                                                             task_start_date = startDate,
                                                             task_estimate_date =estimateDate,
                                                             project_code = state.taskCountData?.project_code!!,
-                                                            task_status = "TO DO"
+                                                            task_status = "TO DO",
+                                                            created_by = userData?.staff_name!!
                                                         )
                                                     ), onSuccess = {
                                                         textJiraId.value = ""
                                                         textProjectDetails.value = ""
                                                         taskName.value = ""
                                                         showSuccess = true
+                                                        viewModel.getTaskCount(selectedStatus)
+                                                        viewModel.getNewTaskList(staffName = userData.staff_name)
+                                                            // update task no
+
                                                     }
                                                 )
                                             }
@@ -969,6 +991,15 @@ fun TaskScreen(
 
                     Spacer(modifier = Modifier.height(15.dp))
 
+                    if(state.isGetNewTask!!) {
+                        LazyColumnExample(state.newTaskList!!)
+                    }else{
+                        if(state.isLoading){
+                            CircularProgressIndicator(modifier = Modifier.padding(vertical = 150.dp))
+                        }
+                    }
+
+
                 }
             }
         }
@@ -982,3 +1013,184 @@ fun TaskScreen(
     }
 
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun NewlyAddedTasks(viewModel: TaskViewModel) {
+
+    val newTaskList by viewModel.newTaskList.collectAsState()
+    val context = LocalContext.current
+
+    if (viewModel.state.value.isGetNewTask!!) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.padding()
+        ) {
+            Column(modifier = Modifier.
+            fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = 30.dp, vertical = 5.dp)
+                ) {
+                    Text(text = "New Task List", style = TextStyle_600_14, color = ColorPrimary)
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                LazyColumn(modifier = Modifier.height(200.dp)) {
+                    items(newTaskList) { item ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 2.dp)
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .height(130.dp)
+                                    .clickable {
+
+                                    }
+                                    .padding(
+                                        vertical = dimensionResource(id = R.dimen.dimen_10),
+                                        horizontal = dimensionResource(id = R.dimen.dimen_10)
+                                    ),
+                                shape = RoundedCornerShape(dimensionResource(id = R.dimen.dimen_10)),
+                                elevation = 10.dp
+                            ) {
+
+                                if (item.project_name.isEmpty().not()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .background(
+                                                if (item.task_status == "TO DO") {
+                                                    todoColor
+                                                } else {
+                                                    doneColor
+                                                }
+                                            )
+                                            .padding(10.dp)
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier
+                                                .padding(
+                                                    horizontal = 10.dp
+                                                )
+                                                .fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                text = item.project_name!!,
+                                                style = TextStyle_600_12,
+                                                color = Color.Red
+                                            )
+
+                                            Text(
+                                                text = item.task_name!!,
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Date",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(70.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(30.dp))
+                                            Text(
+                                                text = formatDate(item.task_start_date!!),
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Task No",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(70.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(30.dp))
+                                            Text(
+                                                text = item.task_name!!,
+                                                style = TextStyle_500_12,
+                                                color = Color.Magenta
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Task",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(70.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(30.dp))
+                                            Text(
+                                                text = item.task_details!!,
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "Status",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(70.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(30.dp))
+                                            Text(
+                                                text = "Approval Pending",
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    } else {
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (viewModel.state.value.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.padding(vertical = 100.dp))
+            }
+        }
+
+    }
+
+}
+
+

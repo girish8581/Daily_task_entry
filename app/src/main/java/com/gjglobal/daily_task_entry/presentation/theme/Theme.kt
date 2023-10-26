@@ -2,12 +2,10 @@ package com.gjglobal.daily_task_entry.presentation.theme
 
 import android.annotation.SuppressLint
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Shapes
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import com.gjglobal.hms_gj.presentation.theme.Typography
 
 
 @SuppressLint("ConflictingOnColor")

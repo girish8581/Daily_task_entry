@@ -1,4 +1,4 @@
-package com.gjglobal.hms_gj.presentation.theme
+package com.gjglobal.daily_task_entry.presentation.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.graphics.Color
@@ -8,7 +8,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.gjglobal.daily_task_entry.R
-import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 
 
 val Montserrat: FontFamily = FontFamily(

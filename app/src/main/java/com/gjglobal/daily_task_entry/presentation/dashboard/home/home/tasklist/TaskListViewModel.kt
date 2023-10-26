@@ -11,8 +11,11 @@ import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdate
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaItem
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaRequest
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,9 +39,28 @@ class TaskListViewModel @Inject constructor(
 
     private val _taskList = MutableStateFlow(listOf<TaskListItem>())
     private val _recentUpdatesList = MutableStateFlow(listOf<RecentUpdateItem>())
+    private val _recentUpdatesQaList = MutableStateFlow(listOf<RecentUpdateQaItem>())
 
     private var _searchText = MutableStateFlow("")
     var searchText = _searchText.asStateFlow()
+
+
+    var recentUpdatesQaList = searchText
+        .combine(_recentUpdatesQaList) { text, recentUpdatesList ->
+            if (text.isBlank()) {
+                recentUpdatesList
+            } else {
+                recentUpdatesList.filter {
+                    it.doesMatchSearchQuery(text)
+                }
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            _recentUpdatesQaList.value
+        )
+
 
     var recentUpdatesList = searchText
         .combine(_recentUpdatesList) { text, recentUpdatesList ->
@@ -99,7 +121,7 @@ class TaskListViewModel @Inject constructor(
                             Log.e("result", result.data.toString())
                         } else {
                             _state.value = _state.value.copy(
-                                isTaskList = false
+                                isTaskList = false,taskList = null
                             )
                         }
                     }
@@ -142,6 +164,40 @@ class TaskListViewModel @Inject constructor(
 
                     //get updated in progress list
                     //getTaskList(taskListRequest = TaskListRequest(staff_name = taskStatusRequest.staff_name))
+                }
+
+                is Resource.Error -> {
+                    Log.i("status error",result.data.toString())
+                    _state.value = _state.value.copy(
+                        isLoading = false,
+                        error = result.message ?: "An unexpected error occurred",
+                    )
+                }
+
+                is Resource.Loading -> {
+                    Log.e("loading", "")
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+
+    fun saveQaTaskStatus(qaTaskRequest: QaTaskRequest,onSuccess: () -> Unit) {
+        taskListUseCase.saveQaTaskStatus(
+            qaTaskRequest
+        ).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    onSuccess.invoke()
+                    Log.i("QA status succuss",result.data.toString())
+                    if (result.data != null) {
+                        _state.value =
+                            _state.value.copy(isLoading = false, isQaStatusSaved = true)
+
+                    }
                 }
 
                 is Resource.Error -> {
@@ -216,6 +272,45 @@ class TaskListViewModel @Inject constructor(
 
                     is Resource.Error -> {
                         _state.value = _state.value.copy(isRecentUpdatesList = false)
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = result.message ?: "An unexpected error occurred"
+
+                        )
+                    }
+
+                    is Resource.Loading -> {
+                        _state.value = _state.value.copy(isLoading = true)
+                    }
+
+                    else -> {}
+                }
+            }.launchIn(viewModelScope)
+    }
+
+    fun getRecentQaUpdates(recentUpdateQaRequest: RecentUpdateQaRequest) {
+        taskListUseCase.getRecentQaUpdates(recentUpdateQaRequest= recentUpdateQaRequest)
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        if (result.data.toString().isNotEmpty()) {
+                            _state.value = _state.value.copy(isTaskList = true)
+                            _state.value =
+                                _state.value.copy(isLoading = false, isRecentUpdatesQaList = true, recentUpdatesQaList = result.data?.data,isRecentUpdatesList = true)
+                            Log.e("result", result.data.toString())
+
+                            _recentUpdatesQaList.update {
+                                result.data?.data!!
+                            }
+                        } else {
+                            _state.value = _state.value.copy(
+                                isRecentUpdatesQaList = false
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(isRecentUpdatesQaList = false)
                         _state.value = _state.value.copy(
                             isLoading = false,
                             error = result.message ?: "An unexpected error occurred"

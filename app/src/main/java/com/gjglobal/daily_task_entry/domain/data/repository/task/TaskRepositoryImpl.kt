@@ -17,12 +17,16 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.StaffTaskDateWiseResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSummaryCountResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
@@ -39,6 +43,10 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun saveTaskStatus(taskStatusRequest: TaskStatusRequest): TaskStatusResponse {
         return api.saveTaskStatus(taskStatusRequest = taskStatusRequest)
+    }
+
+    override suspend fun saveQaTaskStatus(qaTaskRequest: QaTaskRequest): TaskStatusResponse {
+        return api.saveQATaskStatus(qaTaskRequest = qaTaskRequest)
     }
 
     override suspend fun updateTaskStatus(
@@ -100,12 +108,20 @@ class TaskRepositoryImpl @Inject constructor(
         return api.addNewTask(addNewTaskRequest = addNewTaskRequest)
     }
 
+    override suspend fun getNewTaskList(staffName: String): NewTaskResponse {
+        return api.getNewTaskList(staffName = staffName)
+    }
+
     override suspend fun addTaskMapping(taskMappingRequest: TaskMappingRequest): ApiCreateResponse {
         return api.addTaskMapping(taskMappingRequest=taskMappingRequest)
     }
 
     override suspend fun getRecentUpdates(recentUpdateRequest: RecentUpdateRequest): RecentUpdateResponse {
         return api.getRecentUpdates(recentUpdateRequest = recentUpdateRequest)
+    }
+
+    override suspend fun getRecentQaUpdates(recentUpdateQaRequest: RecentUpdateQaRequest): RecentUpdateQaResponse {
+        return api.getQaRecentUpdates(recentUpdateQaRequest=recentUpdateQaRequest)
     }
 
 }

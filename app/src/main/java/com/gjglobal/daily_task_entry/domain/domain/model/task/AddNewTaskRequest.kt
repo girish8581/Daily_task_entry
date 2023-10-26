@@ -10,5 +10,6 @@ data class AddNewTaskRequest(
     val task_name: String,
     val task_no: String,
     val task_start_date: String,
-    val task_status: String
+    val task_status: String,
+    val created_by:String
 )

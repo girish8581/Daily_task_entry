@@ -1,13 +1,6 @@
 package com.gjglobal.daily_task_entry.presentation.theme
 
 import androidx.compose.ui.unit.sp
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_100_Courier
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_300
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_400
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_500
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_600
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_700
-import com.gjglobal.hms_gj.presentation.theme.TextStyle_800
 
 val TextStyle_600_26 = TextStyle_600.copy(fontSize = 26.sp)
 val TextStyle_600_14 = TextStyle_600.copy(fontSize = 14.sp)
