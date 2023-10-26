@@ -20,13 +20,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -37,17 +36,21 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -59,22 +62,20 @@ import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.presentation.components.DialogPopup
+import com.gjglobal.daily_task_entry.presentation.components.LottiePopUp
+import com.gjglobal.daily_task_entry.presentation.components.LottiePopUpPlay
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardActivity
-import com.gjglobal.daily_task_entry.presentation.theme.BlueRms
-import com.gjglobal.daily_task_entry.presentation.theme.BlueWhite
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
-import com.gjglobal.daily_task_entry.presentation.theme.Pink80
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
-import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_11
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_24
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_24
-import com.gjglobal.daily_task_entry.presentation.theme.appColor
+import com.gjglobal.daily_task_entry.presentation.theme.blueVarient
 
 
 @SuppressLint("SuspiciousIndentation")
@@ -88,15 +89,23 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val state = viewModel.state.value
     val context = LocalContext.current
-
+    val focusRequesterForPassword by remember { mutableStateOf(FocusRequester()) }
     val cacheManager = CacheManager(context)
 
     OnLifeCycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
-                try {
 
-                }catch (e:Exception){
+                try {
+                    if (cacheManager.getUsernamePassword()?.username!!.isNotEmpty()) {
+                        viewModel.login(
+                            cacheManager.getUsernamePassword()?.username!!,
+                            cacheManager.getUsernamePassword()?.password!!,
+                            activity
+                        )
+                    }
+
+                } catch (e: Exception) {
                     println(e)
                 }
 
@@ -133,11 +142,17 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                Image(
-                    modifier = Modifier.padding(top = 100.dp),
-                    painter = painterResource(id = R.drawable.notes),
-                    contentDescription = "Task logo"
+//                Image(
+//                    modifier = Modifier.padding(top = 100.dp),
+//                    painter = painterResource(id = R.drawable.notes),
+//                    contentDescription = "Task logo"
+//                )
+
+                LottiePopUpPlay(
+                    modifier = Modifier.size(dimensionResource(id = R.dimen.dimen_250)),
+                    lottie = R.raw.task2
                 )
+
                 Spacer(modifier = Modifier.height(25.dp))
                 Text(
                     "GJ Task Management",
@@ -179,100 +194,70 @@ fun LoginScreen(
                         }
 
                         Spacer(modifier = Modifier.height(15.dp))
-                        Box(
+
+                        OutlinedTextField(
+                            value = state.userName,
                             modifier = Modifier
-                                .height(54.dp)
-                                .width(311.dp)
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(BlueWhite)
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(5.dp)
-                            ) {
-                                Text(
-                                    text = "User Name",
-                                    color = TextColor,
-                                    style = TextStyle_400_11,
-                                    modifier = Modifier.align(Alignment.Start)
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                BasicTextField(
-                                    value = state.userName,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.Start)
-                                        .focusRequester(focusRequester),
-                                    onValueChange = {
-                                        viewModel.isValidUsername(it)
-                                    },
-                                    textStyle = TextStyle_500_16,
-                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                    maxLines = 1,
-                                    singleLine = true
-                                )
-//                                    }
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(30.dp))
+                                .fillMaxWidth()
+                                .align(Alignment.Start)
+                                .focusRequester(focusRequester),
+                            onValueChange = {
+                                viewModel.isValidUsername(it)
+                            },
+                            textStyle = TextStyle_500_16,
+                            keyboardActions = KeyboardActions(
+                                onDone = { focusManager.clearFocus() },
+                                onNext = { focusRequesterForPassword.requestFocus() }),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            maxLines = 1,
+                            singleLine = true,
+                            label = { Text(text = "UserName") },
+                            placeholder = { Text(text = "Enter your UserName") },
+                        )
+
+                        Spacer(modifier = Modifier.height(18.dp))
 
                         val showPassword = remember { mutableStateOf(false) }
-                        Box(
+
+                        OutlinedTextField(
+                            value = state.password,
                             modifier = Modifier
-                                .height(54.dp)
-                                .width(345.dp)
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(BlueWhite)
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(5.dp)
-                            ) {
-                                Text(
-                                    text = "Password",
-                                    color = TextColor,
-                                    style = TextStyle_400_11,
-                                    modifier = Modifier.align(Alignment.Start)
+                                .fillMaxWidth()
+                                .align(Alignment.Start)
+                                .focusRequester(focusRequesterForPassword),
+                            onValueChange = {
+                                viewModel.isValidPassword(it)
+                            },
+                            textStyle = TextStyle_500_16,
+                            visualTransformation = if (showPassword.value) VisualTransformation.None else PasswordVisualTransformation(),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            maxLines = 1,
+                            singleLine = true,
+                            label = { Text(text = "Password") },
+                            placeholder = { Text(text = "Enter your Password") },
+                            trailingIcon = {
+                                val image = if (showPassword.value) Icons.Filled.Visibility
+                                else Icons.Filled.VisibilityOff
+                                if (showPassword.value) stringResource(id = R.string.hide_password) else stringResource(
+                                    id = R.string.show_password
                                 )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                BasicTextField(
-                                    value = state.password,
+                                Image(imageVector = image,
+                                    contentDescription = stringResource(id = R.string.location),
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .align(Alignment.Start)
-                                        .focusRequester(focusRequester),
-                                    onValueChange = {
-                                        viewModel.isValidPassword(it)
-                                    },
-                                    textStyle = TextStyle_500_16,
-                                    visualTransformation = if (showPassword.value) VisualTransformation.None else PasswordVisualTransformation(),
-                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                                    maxLines = 1,
-                                    singleLine = true
-                                )
-//                                    }
+                                        .padding(
+                                            horizontal = dimensionResource(id = R.dimen.dimen_14),
+                                            vertical = dimensionResource(id = R.dimen.dimen_8)
+                                        )
+                                        .clickable {
+                                            showPassword.value = !showPassword.value
+                                        },
+                                    colorFilter = ColorFilter.tint(blueVarient))
                             }
-                            val image = if (showPassword.value)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-                            val description = "Image"
-                            if (showPassword.value) "Hide password" else "Show password"
-                            Image(
-                                imageVector = image,
-                                contentDescription = "location",
-                                modifier = Modifier
-                                    .align(alignment = Alignment.CenterEnd)
-                                    .padding(
-                                        horizontal = 14.dp,
-                                        vertical = 8.dp
-                                    )
-                                    .clickable {
-                                        showPassword.value = !showPassword.value
-                                    }
-                            )
-                        }
+                        )
                         Spacer(modifier = Modifier.height(10.dp))
                         Row(
                             horizontalArrangement = Arrangement.End,
@@ -291,39 +276,32 @@ fun LoginScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(25.dp))
+
                         Button(
                             onClick = {
                                    focusManager.clearFocus()
+                                    viewModel.login(state.userName, state.password,activity)
 
-                                activity.startActivity(
-                                    Intent(
-                                        activity,
-                                        DashboardActivity::class.java
-                                    )
-                                )
-                                activity.finish()
-
-                                    //viewModel.login(state.userName, state.password,activity)
                             },
-                            colors = ButtonDefaults.buttonColors(BlueRms),
+                            colors = ButtonDefaults.buttonColors(ColorPrimary),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             shape = RoundedCornerShape(30.dp)
                         ) {
-                            AnimatedVisibility(visible = state.isLoading.not()) {
+                            if (state.isLoading.not()) {
                                 Text(
                                     text = "SIGN IN",
                                     color = Color.White,
                                     style = TextStyle_500_14
                                 )
-                                AnimatedVisibility(visible = state.isLoading) {
-                                    CircularProgressIndicator(
-                                        color = Color.White,
-                                        modifier = Modifier
-                                            .size(30.dp)
-                                    )
-                                }
+                            }
+                            AnimatedVisibility(visible = state.isLoading) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.height(180.dp))
@@ -350,13 +328,13 @@ if(state.isLogout){
             Log.e("LOGIN DATA", state.authorization.toString())
             LaunchedEffect(key1 = true) {
 
-//                activity.startActivity(
-//                    Intent(
-//                        activity,
-//                        DashboardActivity::class.java
-//                    )
-//                )
-//                activity.finish()
+                activity.startActivity(
+                    Intent(
+                        activity,
+                        DashboardActivity::class.java
+                    )
+                )
+                activity.finish()
 
             }
 

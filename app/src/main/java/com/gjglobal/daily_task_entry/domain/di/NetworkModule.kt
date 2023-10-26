@@ -16,6 +16,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -34,10 +35,10 @@ object NetworkModule {
 
 //    @Provides
 //    @Singleton
-//    @Named("GateRetrofit")
+//    @Named("LocalRetrofit")
 //    fun provideGateRetrofit(okHttpClient: OkHttpClient): Retrofit {
 //        return Retrofit.Builder()
-//            .baseUrl(Constants.GATE_URL)
+//            .baseUrl(Constants.LOCAL_URL)
 //            .client(okHttpClient)
 //            .addConverterFactory(GsonConverterFactory.create())
 //            .build()
