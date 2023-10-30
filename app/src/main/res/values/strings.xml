@@ -67,4 +67,5 @@
     <string name="do_you_forgot_password">Forgot Password?</string>
     <string name="sign_in">SIGN IN</string>
     <string name="log_out_success">Logged Out Successfully</string>
+    <string name="show_report">Show Report</string>
 </resources>

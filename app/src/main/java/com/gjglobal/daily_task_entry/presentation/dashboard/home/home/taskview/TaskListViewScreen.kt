@@ -1,5 +1,6 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.home.home.taskview
 
+import ShimmerEffectListView
 import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -116,12 +117,14 @@ fun TaskListViewScreen(
             Spacer(modifier = Modifier.width(20.dp))
 
             if (viewModel.state.value.isLoading) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-             
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+
+                ShimmerEffectListView(isLoading = viewModel.state.value.isLoading)
+//                Box(modifier = Modifier.fillMaxSize()) {
+//                    CircularProgressIndicator(
+//
+//                        modifier = Modifier.align(Alignment.Center)
+//                    )
+//                }
             }else{
                 var qaEnable :Boolean = false
                 if(taskStatus=="In QA Testing"){

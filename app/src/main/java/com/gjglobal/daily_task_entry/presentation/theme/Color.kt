@@ -21,6 +21,7 @@ val Grey = Color(0xFF69707F)
 val TimeColor = Color(0xFF949494)
 val GreyWhite = Color(0xFFB9BDC2)
 val ColorPrimary = Color(0xFF2C79D6)
+val GraphColor = Color(0xFFAC073F)
 val ButtonColor = Color(0xFFC2C2C2)
 val BlueRms =   ColorPrimary
 val lightestBlue =Color(0xFFF7F7FB)

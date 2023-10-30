@@ -63,7 +63,7 @@ import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ReportScreen(
+fun ReportScreenOld(
     navController: NavController,
     activity: Activity,
     dashViewModel: DashboardViewModel,

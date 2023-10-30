@@ -1,5 +1,8 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.more.task
 
+import ShimmerEffectListView
+import ShimmerItem
+import ShimmerItemNew
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
@@ -1014,7 +1017,15 @@ fun TaskScreen(
                        LazyColumnExample(state.newTaskList!!)
                    }else{
                        if(state.isLoading){
-                           CircularProgressIndicator(modifier = Modifier.padding(vertical = 150.dp))
+                           Row(modifier = Modifier.fillMaxWidth(),
+                               horizontalArrangement = Arrangement.Center,
+                               verticalAlignment = Alignment.CenterVertically){
+
+                               ShimmerEffectListView(state.isLoading)
+                               //CircularProgressIndicator(modifier = Modifier.padding(vertical = 20.dp))
+
+                           }
+
                        }
                    }
                }
@@ -1044,6 +1055,8 @@ fun TaskScreen(
 
     }
 }
+
+
 
 
 @Composable
@@ -1201,4 +1214,5 @@ fun ItemRow(data: NewTaskItem) {
         }
     }
 }
+
 

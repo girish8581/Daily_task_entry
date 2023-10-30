@@ -2,11 +2,14 @@ package com.gjglobal.daily_task_entry.domain.di
 
 import com.gjglobal.daily_task_entry.domain.data.remote.LeaveSaveApi
 import com.gjglobal.daily_task_entry.domain.data.remote.LoginApi
+import com.gjglobal.daily_task_entry.domain.data.remote.NotificationApi
 import com.gjglobal.daily_task_entry.domain.data.remote.TaskApi
 import com.gjglobal.daily_task_entry.domain.data.repository.leave.LeaveRepository
 import com.gjglobal.daily_task_entry.domain.data.repository.leave.LeaveRepositoryImpl
 import com.gjglobal.daily_task_entry.domain.data.repository.login.LoginRepository
 import com.gjglobal.daily_task_entry.domain.data.repository.login.LoginRepositoryImpl
+import com.gjglobal.daily_task_entry.domain.data.repository.notification.NotificationRepository
+import com.gjglobal.daily_task_entry.domain.data.repository.notification.NotificationRepositoryImpl
 import com.gjglobal.daily_task_entry.domain.data.repository.task.TaskRepository
 import com.gjglobal.daily_task_entry.domain.data.repository.task.TaskRepositoryImpl
 import dagger.Module
@@ -15,6 +18,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.hilt.android.components.ServiceComponent
 import retrofit2.Retrofit
+import retrofit2.create
 
 @Module
 @InstallIn(ActivityRetainedComponent::class, ServiceComponent::class)
@@ -47,6 +51,16 @@ object DataModule{
     @Provides
     internal fun provideLoginRepository(api: LoginApi): LoginRepository {
         return LoginRepositoryImpl(api)
+    }
+
+    @Provides
+    internal fun provideNotificationApi(retrofit: Retrofit):NotificationApi{
+        return retrofit.create(NotificationApi::class.java)
+    }
+
+    @Provides
+    internal fun provideNotificationRepository(api:NotificationApi):NotificationRepository{
+        return NotificationRepositoryImpl(api)
     }
 
 }

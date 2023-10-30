@@ -6,7 +6,6 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface LoginApi {
-
     @POST("services/getLogin.php")
     suspend fun login(@Body loginRequest: LoginRequest): Authorization
 }

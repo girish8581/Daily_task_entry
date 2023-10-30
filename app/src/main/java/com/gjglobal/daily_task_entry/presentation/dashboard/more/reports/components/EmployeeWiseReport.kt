@@ -16,13 +16,20 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
@@ -34,15 +41,19 @@ import com.gjglobal.daily_task_entry.presentation.theme.BgBlur
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreen
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
+import com.gjglobal.daily_task_entry.presentation.theme.GraphColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_16
-import com.gjglobal.daily_task_entry.presentation.theme.todoColor
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApiReport
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -53,14 +64,15 @@ fun EmployeeWiseReport(
 ) {
     val context = LocalContext.current
     val cacheManager = CacheManager(context)
+    val userData = cacheManager.getAuthResponse()?.data?.get(0)
+    val staffName = userData?.staff_name
+    val userRole = userData?.userType
+
     val viewModel: ReportViewModel = hiltViewModel()
     val taskViewModel :TaskAssignViewModel = hiltViewModel()
     val state = viewModel.state.value
     val taskState = taskViewModel.state.value
 
-    val userData = cacheManager.getAuthResponse()?.data?.get(0)
-    val staffName = userData?.staff_name
-    val userRole = userData?.userType
 
     var selectedFromDate =""
     var selectedToDate =""
@@ -166,6 +178,7 @@ fun EmployeeWiseReport(
                         .align(Alignment.End)
                         .clickable {
                             onClickCancelBtn.invoke()
+                            taskViewModel.isValidTaskList(false)
                         }
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -174,7 +187,7 @@ fun EmployeeWiseReport(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Employee wise Report",
+                        text = "Task Report",
                         color = Color(0xFF344767),
                         textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
                     )
@@ -429,8 +442,6 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
     if (viewModel.state.value.isTaskList!!) {
         val listTaskNo: ArrayList<String> = ArrayList()
         val staffList: ArrayList<String> = ArrayList()
-
-
         viewModel.state.value.staffTaskDateWise?.let { staffTasks ->
             val taskNumbersSet = HashSet<String>()
             staffTasks.forEach { task ->
@@ -474,16 +485,25 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
         val daysCount = days?.count() ?: 0
 
 
-//        val completedCount = viewModel.state.value.staffTaskDateWise
-//            ?.filter { it.task_status == "COMPLETED" }
-//            ?.groupBy { it.task_no }
-//            ?.mapValues { it.value.count() }
+        val timeTaken = viewModel.state.value.staffTaskDateWise
+            ?.map { it.timeTaken }
+            ?.filterNotNull()
+            ?: emptyList()
 
-//        val completedCount = viewModel.state.value.staffTaskDateWise
-//            ?.filter { it.task_status == "COMPLETED" }
-//            ?.map { it.task_no }
-//            ?.distinct()
-//            ?.count() ?: 0
+        println(timeTaken)
+
+        val sumOfTimeTaken = timeTaken
+            .map { parseDuration(it) }
+            .reduce { acc, duration -> acc.plus(duration) }
+
+        println("sum:$sumOfTimeTaken")
+
+        val formattedSum = formatDuration(sumOfTimeTaken)
+
+        println("formatted:$formattedSum")
+
+        // Function to parse time strings like "06:30" to Duration
+
 
         val completedCount = viewModel.state.value.staffTaskDateWise
             ?.groupBy { it.task_no }
@@ -497,22 +517,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
             ?.map { it.last().task_status }
             ?.count { it == "IN PROGRESS" } ?: 0
 
-//        val inProgressCount = viewModel.state.value.staffTaskDateWise
-//            ?.filter { it.task_status == "IN PROGRESS" }
-//            ?.map { it.task_no }
-//            ?.distinct()
-//            ?.count() ?: 0
 
-
-        //val completeCount = completedCount?.count() ?: 0
-
-
-//        val inProgress = viewModel.state.value.staffTaskDateWise
-//        ?.filter { it.task_status == "IN PROGRESS" }
-//            ?.groupBy { it.task_no }
-//            ?.mapValues { it.value.count() }
-//
-//        val inProgressCount = inProgress?.count() ?: 0
 
 
         Box(
@@ -528,6 +533,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
                 RowWithBorder("Total Tasks ",taskNamesCount.toString())
                 RowWithBorder("Completed Tasks ",completedCount.toString())
                 RowWithBorder("In Progress Tasks ",inProgressCount.toString())
+                RowWithBorder("Time Taken ",formattedSum.toString())
 
                 Spacer(modifier = Modifier.height(5.dp))
 
@@ -776,6 +782,501 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun WeekStartEndDates1() {
+    val currentDate = LocalDate.now()
+    val dayOfWeek = currentDate.dayOfWeek.value // 1 for Monday, 7 for Sunday
+
+    // Calculate the start of the week based on the day of the week
+    val weekStartDate = currentDate.minusDays((dayOfWeek - 1).toLong())
+
+    // Calculate the end of the week (Saturday)
+    val daysUntilEndOfWeek = DayOfWeek.SATURDAY.value - dayOfWeek
+    val weekEndDate = weekStartDate.plusDays(daysUntilEndOfWeek.toLong())
+
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd") // Format pattern
+    val formattedStartDate = weekStartDate.format(dateFormatter)
+    val formattedEndDate = weekEndDate.format(dateFormatter)
+
+    Text("Current Date: $currentDate")
+    Text("Start of the Week (Sunday): $formattedStartDate")
+    Text("End of the Week (Saturday): $formattedEndDate")
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun WeekStartEndDates() {
+    val currentDate = LocalDate.now()
+    // Calculate the start of the week (Sunday)
+    val weekStartDate = currentDate.with(DayOfWeek.SUNDAY)
+    // Calculate the end of the week (Saturday)
+    val weekEndDate = weekStartDate.plusDays(6)
+    Text("Current Date: $currentDate")
+    Text("Start of the Week (Sunday): $weekStartDate")
+    Text("End of the Week (Saturday): $weekEndDate")
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnable:Boolean) {
+    val currentDate = LocalDate.now()
+    val dayOfWeek = currentDate.dayOfWeek.value // 1 for Monday, 7 for Sunday
+    // Calculate the start of the week based on the day of the week
+    val weekStartDate = currentDate.minusDays((dayOfWeek - 1).toLong())
+    // Calculate the end of the week (Saturday)
+    val daysUntilEndOfWeek = DayOfWeek.SATURDAY.value - dayOfWeek
+    val weekEndDate = weekStartDate.plusDays(daysUntilEndOfWeek.toLong())
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd") // Format pattern
+    val formattedStartDate = weekStartDate.format(dateFormatter)
+    val formattedEndDate = weekEndDate.format(dateFormatter)
+
+//    Text("Current Date: $currentDate")
+//    Text("Start of the Week (Sunday): $formattedStartDate")
+//    Text("End of the Week (Saturday): $formattedEndDate")
+
+    val context = LocalContext.current
+    val cacheManager = CacheManager(context)
+    val userData = cacheManager.getAuthResponse()?.data?.get(0)
+    val staffName = userData?.staff_name
+    val userRole = userData?.userType
+
+    if(userRole == "ADMIN") {
+        viewModel.getStaffTaskDateWise(
+            StaffTaskDateWiseRequest(
+                from_date = weekStartDate.toString(),
+                staff_name = "ALL",
+                to_date = weekEndDate.toString()
+            )
+        )
+    }else{
+        viewModel.getStaffTaskDateWise(
+            StaffTaskDateWiseRequest(
+                from_date = weekStartDate.toString(),
+                staff_name = staffName!!,
+                to_date = weekEndDate.toString()
+            )
+        )
+    }
+
+    Card(
+        modifier = Modifier.padding(all = dimensionResource(id = R.dimen.dimen_10)),
+        shape = RoundedCornerShape(
+            dimensionResource(id = R.dimen.dimen_10)
+        )
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(5.dp)
+        ) {
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Image(
+                painter = painterResource(id = R.drawable.ic_round_cancel_24),
+                contentDescription = "roundCancel",
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .clickable {
+                        viewModel.isValidTaskList(false)
+                        onClick.invoke()
+                    }
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Weekly Summary Report",
+                    color = Color(0xFF344767),
+                    textAlign = TextAlign.Center, fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+
+    var i = 0
+    if (viewModel.state.value.isTaskList!!) {
+        val listTaskNo: ArrayList<String> = ArrayList()
+        val staffList: ArrayList<String> = ArrayList()
+        viewModel.state.value.staffTaskDateWise?.let { staffTasks ->
+            val taskNumbersSet = HashSet<String>()
+            staffTasks.forEach { task ->
+                task.task_no.let { taskNo ->
+                    taskNumbersSet.add(taskNo)
+                }
+            }
+            listTaskNo.addAll(taskNumbersSet)
+        }
+
+        viewModel.state.value.staffTaskDateWise?.let { staffTasks ->
+            val taskNumbersSet = HashSet<String>()
+            staffTasks.forEach { task ->
+                task.staff_name.let { taskNo ->
+                    taskNumbersSet.add(taskNo)
+                }
+            }
+            staffList.addAll(taskNumbersSet)
+        }
+        val taskNames = viewModel.state.value.staffTaskDateWise
+            ?.map { it.task_no }
+
+        val taskNameCount = taskNames?.count() ?: 0
+
+        val taskNamesList = viewModel.state.value.staffTaskDateWise
+            ?.map { it.task_no }
+            ?.distinct()
+
+        val taskNamesCount = taskNamesList?.count() ?: 0
+
+        val projList = viewModel.state.value.staffTaskDateWise
+            ?.map { it.project_name }
+            ?.distinct()
+
+        val projCount = projList?.count() ?: 0
+
+        val days = viewModel.state.value.staffTaskDateWise
+            ?.map { it.date }
+            ?.distinct()
+
+        val daysCount = days?.count() ?: 0
+
+
+        val timeTaken = viewModel.state.value.staffTaskDateWise
+            ?.map { it.timeTaken }
+            ?.filterNotNull()
+            ?: emptyList()
+
+        println(timeTaken)
+
+        val sumOfTimeTaken = timeTaken
+            .map { parseDuration(it) }
+            .reduce { acc, duration -> acc.plus(duration) }
+
+        println("sum:$sumOfTimeTaken")
+
+        val formattedSum = formatDuration(sumOfTimeTaken)
+
+        println("formatted:$formattedSum")
+
+        // Function to parse time strings like "06:30" to Duration
+
+
+        val completedCount = viewModel.state.value.staffTaskDateWise
+            ?.groupBy { it.task_no }
+            ?.values
+            ?.map { it.last().task_status }
+            ?.count { it == "COMPLETED" } ?: 0
+
+        val inProgressCount = viewModel.state.value.staffTaskDateWise
+            ?.groupBy { it.task_no }
+            ?.values
+            ?.map { it.last().task_status }
+            ?.count { it == "IN PROGRESS" } ?: 0
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    val data = listOf(
+                        "Project Count" to projCount,
+                        "Worked day Count" to daysCount,
+                        "Resource Count" to staffList.size,
+                        // Add more data points here
+                    )
+
+                    val data1 = listOf(
+                        1f,
+                       1.5f,
+                        0.56f,
+                        // Add more data points here
+                    )
+
+//                    Column {
+//                        // Other Composables
+//                        BarChart(modifier = Modifier,data1,200.dp)
+//                    }
+
+
+                    Column() {
+
+                        BarChart(
+                            modifier = Modifier.fillMaxWidth(),
+                            values = listOf(projCount.toFloat(),taskNameCount.toFloat(), taskNamesCount.toFloat(),
+                                completedCount.toFloat(),inProgressCount.toFloat(),
+                                convertTimeToFloat(formattedSum)),
+                            maxHeight = 200.dp,
+                            labels =listOf( "Proj","Job","Task","Done","In prog","Time")
+                        )
+
+                        println(convertTimeToFloat(formattedSum))
+
+                        if(summaryEnable) {
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            RowWithBorder("Project Count ", projCount.toString())
+                            RowWithBorder("Worked day Count ", daysCount.toString())
+                            RowWithBorder("Resource Count ", staffList.size.toString())
+                            RowWithBorder("Job Done ", taskNameCount.toString())
+                            RowWithBorder("Total Tasks ", taskNamesCount.toString())
+                            RowWithBorder("Completed Tasks ", completedCount.toString())
+                            RowWithBorder("In Progress Tasks ", inProgressCount.toString())
+                            RowWithBorder("Time Taken ", formattedSum.toString())
+                            Spacer(modifier = Modifier.height(5.dp))
+                        }
+                    }
+
+
+                }
+            }
+        }
+    }
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
+    val currentDate = LocalDate.now()
+    val dayOfWeek = currentDate.dayOfWeek.value // 1 for Monday, 7 for Sunday
+    // Calculate the start of the week based on the day of the week
+    val weekStartDate = currentDate.minusDays((dayOfWeek - 1).toLong())
+    // Calculate the end of the week (Saturday)
+    val daysUntilEndOfWeek = DayOfWeek.SATURDAY.value - dayOfWeek
+    val weekEndDate = weekStartDate.plusDays(daysUntilEndOfWeek.toLong())
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd") // Format pattern
+    val formattedStartDate = weekStartDate.format(dateFormatter)
+    val formattedEndDate = weekEndDate.format(dateFormatter)
+
+    val context = LocalContext.current
+    val cacheManager = CacheManager(context)
+    val userData = cacheManager.getAuthResponse()?.data?.get(0)
+    val staffName = userData?.staff_name
+    val userRole = userData?.userType
+
+    if(userRole == "ADMIN") {
+        viewModel.getStaffTaskDateWise(
+            StaffTaskDateWiseRequest(
+                from_date = weekStartDate.toString(),
+                staff_name = "ALL",
+                to_date = weekEndDate.toString()
+            )
+        )
+    }else{
+        viewModel.getStaffTaskDateWise(
+            StaffTaskDateWiseRequest(
+                from_date = weekStartDate.toString(),
+                staff_name = staffName!!,
+                to_date = weekEndDate.toString()
+            )
+        )
+    }
+
+    Box(){
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(5.dp)
+        ) {
+
+            var i = 0
+            if (viewModel.state.value.isTaskList!!) {
+                val listTaskNo: ArrayList<String> = ArrayList()
+                val staffList: ArrayList<String> = ArrayList()
+                viewModel.state.value.staffTaskDateWise?.let { staffTasks ->
+                    val taskNumbersSet = HashSet<String>()
+                    staffTasks.forEach { task ->
+                        task.task_no.let { taskNo ->
+                            taskNumbersSet.add(taskNo)
+                        }
+                    }
+                    listTaskNo.addAll(taskNumbersSet)
+                }
+
+                viewModel.state.value.staffTaskDateWise?.let { staffTasks ->
+                    val taskNumbersSet = HashSet<String>()
+                    staffTasks.forEach { task ->
+                        task.staff_name.let { taskNo ->
+                            taskNumbersSet.add(taskNo)
+                        }
+                    }
+                    staffList.addAll(taskNumbersSet)
+                }
+                val taskNames = viewModel.state.value.staffTaskDateWise
+                    ?.map { it.task_no }
+
+                val taskNameCount = taskNames?.count() ?: 0
+
+                val taskNamesList = viewModel.state.value.staffTaskDateWise
+                    ?.map { it.task_no }
+                    ?.distinct()
+
+                val taskNamesCount = taskNamesList?.count() ?: 0
+
+                val projList = viewModel.state.value.staffTaskDateWise
+                    ?.map { it.project_name }
+                    ?.distinct()
+
+                val projCount = projList?.count() ?: 0
+
+                val days = viewModel.state.value.staffTaskDateWise
+                    ?.map { it.date }
+                    ?.distinct()
+
+                val daysCount = days?.count() ?: 0
+
+
+                val timeTaken = viewModel.state.value.staffTaskDateWise
+                    ?.map { it.timeTaken }
+                    ?.filterNotNull()
+                    ?: emptyList()
+
+                println(timeTaken)
+
+                val sumOfTimeTaken = timeTaken
+                    .map { parseDuration(it) }
+                    .reduce { acc, duration -> acc.plus(duration) }
+
+                println("sum:$sumOfTimeTaken")
+
+                val formattedSum = formatDuration(sumOfTimeTaken)
+
+                println("formatted:$formattedSum")
+
+                // Function to parse time strings like "06:30" to Duration
+
+
+                val completedCount = viewModel.state.value.staffTaskDateWise
+                    ?.groupBy { it.task_no }
+                    ?.values
+                    ?.map { it.last().task_status }
+                    ?.count { it == "COMPLETED" } ?: 0
+
+                val inProgressCount = viewModel.state.value.staffTaskDateWise
+                    ?.groupBy { it.task_no }
+                    ?.values
+                    ?.map { it.last().task_status }
+                    ?.count { it == "IN PROGRESS" } ?: 0
+                Box(
+                    Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    val data = listOf(
+                        "Project Count" to projCount,
+                        "Worked day Count" to daysCount,
+                        "Resource Count" to staffList.size,
+                        // Add more data points here
+                    )
+
+                    val data1 = listOf(
+                        1f,
+                        1.5f,
+                        0.56f,
+                        // Add more data points here
+                    )
+
+                    Column() {
+
+                        BarChart(
+                            modifier = Modifier.fillMaxWidth(),
+                            values = listOf(projCount.toFloat(),taskNameCount.toFloat(), taskNamesCount.toFloat(),
+                                completedCount.toFloat(),inProgressCount.toFloat(),
+                                convertTimeToFloat(formattedSum)),
+                            maxHeight = 200.dp,
+                            labels =listOf( "Proj","Job","Task","Done","In prog","Time")
+                        )
+
+                    }
+                }
+            }
+        }
+    }
+
+
+}
+fun convertTimeToFloat(timeString: String): Float {
+    return try {
+        val parts =
+            timeString.split(":".toRegex()).dropLastWhile { it.isEmpty() }
+                .toTypedArray()
+        val hours = parts[0].toInt()
+        val minutes = parts[1].toInt()
+        val output =  (hours * 60 + minutes).toFloat()
+        output/60
+
+    } catch (e: NumberFormatException) {
+        // Handle invalid time format or other exceptions
+        e.printStackTrace()
+        -1.0f // or any appropriate error value
+    } catch (e: ArrayIndexOutOfBoundsException) {
+        e.printStackTrace()
+        -1.0f
+    }
+}
+
+@Composable
+fun BarChart2(
+    data: List<Pair<String, Int>>,
+    maxValue: Int
+) {
+    val barWidth = 40f // Width of each bar in pixels
+    val maxBarHeight = 150f // Maximum height of a bar in pixels
+    val padding = 16f // Padding in pixels
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding.dp)
+    ) {
+        val barCount = data.size
+        val barSpacing = (size.width - 2 * padding) / (barCount + 1)
+
+        val maxDataValue = data.maxOf { it.second }.toFloat()
+
+        data.forEachIndexed { index, (label, value) ->
+            val barHeight = (value.toFloat() / maxValue) * maxBarHeight
+            val x = padding + (index + 1) * barSpacing + index * barWidth
+            val y = size.height - padding
+
+            drawRect(
+                color = Color.Blue,
+                topLeft = Offset(x, y - barHeight),
+                size = Size(barWidth, barHeight)
+            )
+
+            // Draw the label text using drawText
+//            drawText(
+//                text = label,
+//                color = Color.Black,
+//                fontSize = 16.sp,
+//                topLeft = Offset(x + barWidth / 2, y + 20f)
+//            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun parseDuration(timeStr: String): Duration {
+    val parts = timeStr.split(":")
+    val hours = parts[0].toLong()
+    val minutes = parts[1].toLong()
+    return Duration.ofHours(hours).plusMinutes(minutes)
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun formatDuration(duration: Duration): String {
+    val totalMinutes = duration.toMinutes()
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return String.format("%02d:%02d", hours, minutes)
+}
+
+
 @Composable
 fun RowWithBorder(Name:String,Count:String) {
     Box(
@@ -799,7 +1300,7 @@ fun RowWithBorder(Name:String,Count:String) {
             )
 
             Text(
-                text = "$Count Nos.",
+                text = if(Name != "Time Taken ") {"$Count Nos."}else{"$Count Hrs."},
                 style = TextStyle_600_16,
                 color = Color.White
             )
@@ -807,3 +1308,137 @@ fun RowWithBorder(Name:String,Count:String) {
     }
 }
 
+private val defaultMaxHeight = 100.dp
+@Composable
+internal fun BarChart1(
+    modifier: Modifier = Modifier,
+    values: List<Float>,
+    maxHeight: Dp = defaultMaxHeight
+) {
+    assert(values.isNotEmpty()) { "Input values are empty" }
+
+    val borderColor = MaterialTheme.colors.primary
+    val density = LocalDensity.current
+    val strokeWidth = with(density) { 1.dp.toPx() }
+
+    Row(
+        modifier = modifier.then(
+            Modifier
+                .fillMaxWidth()
+                .height(maxHeight)
+                .drawBehind {
+                    // draw X-Axis
+                    drawLine(
+                        color = borderColor,
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = strokeWidth
+                    )
+                    // draw Y-Axis
+                    drawLine(
+                        color = borderColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = strokeWidth
+                    )
+                }
+        ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        values.forEach { item ->
+            Bar(
+                value = item,
+                color = MaterialTheme.colors.primary,
+                maxHeight = maxHeight
+            )
+        }
+    }
+
+}
+
+@Composable
+internal fun BarChart(
+    modifier: Modifier = Modifier,
+    values: List<Float>,
+    labels: List<String>, // List of labels for each bar
+    maxHeight: Dp = defaultMaxHeight
+) {
+    assert(values.isNotEmpty() && values.size == labels.size) { "Input values are empty or labels don't match" }
+
+    val borderColor = MaterialTheme.colors.primary
+    val density = LocalDensity.current
+    val strokeWidth = with(density) { 1.dp.toPx() }
+
+    Row(
+        modifier = modifier.then(
+            Modifier
+                .fillMaxWidth()
+                .height(maxHeight)
+                .drawBehind {
+                    // draw X-Axis
+                    drawLine(
+                        color = borderColor,
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = strokeWidth
+                    )
+                    // draw Y-Axis
+                    drawLine(
+                        color = borderColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = strokeWidth
+                    )
+                }
+        ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        values.forEachIndexed { index, item ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = labels[index], // Display label
+                    style = TextStyle(
+                        color = Color.Gray, // Customize label text color
+                        fontSize = 12.sp // Customize label text size
+                    )
+                )
+
+                Text(
+                    text = item.toString(), // Display value
+                    style = TextStyle(
+                        color = Color.Black, // Customize value text color
+                        fontSize = 12.sp // Customize value text size
+                    )
+                )
+            }
+            Bar(
+                value = item,
+                color = GraphColor,
+                maxHeight = maxHeight
+            )
+        }
+    }
+}
+
+@Composable
+private fun RowScope.Bar(
+    value: Float,
+    color: Color,
+    maxHeight: Dp
+) {
+
+    val itemHeight = remember(value) { value * maxHeight.value / 100 }
+
+    Spacer(
+        modifier = Modifier
+            .padding(horizontal = 5.dp)
+            .height(itemHeight.dp)
+            .weight(1f)
+            .background(color)
+    )
+
+}

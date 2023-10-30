@@ -1,5 +1,6 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist
 
+import ShimmerEffectListView
 import android.app.Activity
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -178,12 +179,14 @@ fun TaskListScreen(
                                 }
                             }
                         }else {
-                            CircularProgressIndicator(
-                                color = ColorPrimary,
-                                modifier = Modifier
-                                    .padding(top = 200.dp)
-                                    .size(30.dp)
-                            )
+
+                            ShimmerEffectListView(isLoading = viewModel.state.value.isLoading)
+//                            CircularProgressIndicator(
+//                                color = ColorPrimary,
+//                                modifier = Modifier
+//                                    .padding(top = 200.dp)
+//                                    .size(30.dp)
+//                            )
                         }
                     }
                 }

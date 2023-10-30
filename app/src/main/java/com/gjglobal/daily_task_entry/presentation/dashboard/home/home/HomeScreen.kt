@@ -627,17 +627,13 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
     if(viewModel.state.value.isLoading){
         AnimatedVisibility(visible = true) {
             CircularProgressIndicator(
-                color = Color.Green,
+                color = ColorPrimary,
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(40.dp),
+                strokeWidth = 2.dp
             )
         }
     }else{
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 10.dp
-            )
-        ) {
             val painter: Painter = if (viewModel.selectedImageUri.value != null) {
                 rememberImagePainter(viewModel.selectedImageUri.value)
             } else if (viewModel.state.value.profilePic != null) {
@@ -650,19 +646,14 @@ fun ImageFromApi(viewModel: HomeScreenViewModel) {
                 contentDescription = "profile icon",
                 alignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(
-                        vertical = dimensionResource(
-                            id = R.dimen.dimen_15
-                        ),
-                        horizontal = dimensionResource(id = R.dimen.dimen_20)
-                    )
-                    .size(dimensionResource(id = R.dimen.dimen_50))
+                    .padding(horizontal = 5.dp)
+                    .size(dimensionResource(id = R.dimen.dimen_60))
                     .clip(CircleShape)
                     .fillMaxSize()
                     .aspectRatio(1f),
                 contentScale = ContentScale.Crop
             )
-        }
+
     }
     }
 

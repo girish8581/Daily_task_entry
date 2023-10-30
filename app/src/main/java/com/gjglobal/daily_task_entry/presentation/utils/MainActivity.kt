@@ -1,5 +1,8 @@
 package com.gjglobal.daily_task_entry.presentation.utils
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,6 +32,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         connectivityObserver = NetworkConnectivityObserver(applicationContext)
+
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channel = NotificationChannel(
+            "task_channel",
+            "Task Channel",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+        notificationManager.createNotificationChannel(channel)
         setContent {
             DailyActivityApplicationTheme {
                 val status by connectivityObserver.observe().collectAsState(

@@ -58,6 +58,10 @@ class TaskAssignViewModel @Inject constructor(
         _state.value=_state.value.copy(taskTime = hrs, isValidTaskTime = hrs.isNotEmpty())
     }
 
+    fun isValidTaskList(value:Boolean){
+        _state.value=_state.value.copy(isTaskList = value)
+    }
+
 
     fun getTasksProjectName(project_name:String) {
         taskListUseCase.getTasksProjectName(project_name=project_name)

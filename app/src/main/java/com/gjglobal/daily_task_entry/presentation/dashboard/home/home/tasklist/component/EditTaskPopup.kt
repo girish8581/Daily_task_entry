@@ -109,7 +109,7 @@ fun EditTask(
 
 
     val listStatusItems =
-        ArrayList(listOf("IN PROGRESS","COMPLETED", "IN HOLD"))
+        ArrayList(listOf("IN PROGRESS","In QA Testing","TO DO"))
     var selectedDate: String = ""
 
     val listLevelItems =
@@ -384,78 +384,78 @@ fun EditTask(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Select Status:",
-                    style = TextStyle_400_14,
-                    modifier = Modifier.width(100.dp)
-                )
+//            Row(
+//                modifier = Modifier.fillMaxWidth()
+//            ) {
+//                Text(
+//                    text = "Select Status:",
+//                    style = TextStyle_400_14,
+//                    modifier = Modifier.width(100.dp)
+//                )
+//
+//                Spacer(modifier = Modifier.width(20.dp))
+//
+//                Box(
+//                    modifier = Modifier
+//                        .background(color = Color.White)
+//                        .border(
+//                            0.5.dp,
+//                            color = ColorPrimary,
+//                            shape = RoundedCornerShape(4.27.dp)
+//
+//                        )
+//                        .fillMaxWidth()
+//                        .height(35.dp)
+//                ) {
+//                    ExposedDropdownMenuBox(
+//                        expanded = expandedStatus,
+//                        onExpandedChange = {
+//                            expandedStatus = !expandedStatus
+//                        }) {
+//                        ExposedDropdownMenu(expanded = expandedStatus,
+//                            onDismissRequest = { expandedStatus = false }) {
+//                            listStatusItems.forEach { selectedOption ->
+//                                DropdownMenuItem(onClick = {
+//                                    selectedStatus = selectedOption
+//                                    expandedStatus = false
+//                                }) {
+//                                    Text(
+//                                        text = selectedOption,
+//                                        style = TextStyle_400_12,
+//                                        fontWeight = if (selectedOption == selectedStatus) FontWeight.Bold else null
+//                                    )
+//                                }
+//                            }
+//                        }
+//                        Row(
+//                            horizontalArrangement = Arrangement.SpaceBetween,
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            modifier = Modifier
+//                                .padding(start = 8.dp, end = 15.dp)
+//                                .fillMaxSize()
+//                                .clickable {
+//                                    expandedStatus = true
+//                                },
+//
+//                            ) {
+//                            Text(
+//                                text = selectedStatus,
+//                                color = ColorPrimary,
+//                                style = TextStyle_400_12
+//                            )
+//                            Spacer(modifier = Modifier.height(15.dp))
+//                            Image(
+//                                painter = painterResource(id = R.drawable.down_arrow),
+//                                contentDescription = "down arrow"
+//                            )
+//                        }
+//                    }
+//                }
+//            }
 
-                Spacer(modifier = Modifier.width(20.dp))
+           // Spacer(modifier = Modifier.height(5.dp))
 
-                Box(
-                    modifier = Modifier
-                        .background(color = Color.White)
-                        .border(
-                            0.5.dp,
-                            color = ColorPrimary,
-                            shape = RoundedCornerShape(4.27.dp)
-
-                        )
-                        .fillMaxWidth()
-                        .height(35.dp)
-                ) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedStatus,
-                        onExpandedChange = {
-                            expandedStatus = !expandedStatus
-                        }) {
-                        ExposedDropdownMenu(expanded = expandedStatus,
-                            onDismissRequest = { expandedStatus = false }) {
-                            listStatusItems.forEach { selectedOption ->
-                                DropdownMenuItem(onClick = {
-                                    selectedStatus = selectedOption
-                                    expandedStatus = false
-                                }) {
-                                    Text(
-                                        text = selectedOption,
-                                        style = TextStyle_400_12,
-                                        fontWeight = if (selectedOption == selectedStatus) FontWeight.Bold else null
-                                    )
-                                }
-                            }
-                        }
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(start = 8.dp, end = 15.dp)
-                                .fillMaxSize()
-                                .clickable {
-                                    expandedStatus = true
-                                },
-
-                            ) {
-                            Text(
-                                text = selectedStatus,
-                                color = ColorPrimary,
-                                style = TextStyle_400_12
-                            )
-                            Spacer(modifier = Modifier.height(15.dp))
-                            Image(
-                                painter = painterResource(id = R.drawable.down_arrow),
-                                contentDescription = "down arrow"
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            if(selectedStatus=="IN PROGRESS") {
+            //if(selectedStatus=="IN PROGRESS") {
 
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -526,7 +526,7 @@ fun EditTask(
                         }
                     }
                 }
-            }
+           // }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -738,7 +738,7 @@ fun EditTask(
                                 completed_level = selectedLevel,
                                 staff_name = item.staff_name!!,
                                 task_details = item.task_details!!,
-                                task_status = selectedStatus,
+                                task_status = item.task_status,
                                 created_on = currentDateApi() + " " + currentTime24().replace(" ",""),
                             ), onSuccess = {
                                 onEditSuccess.invoke()

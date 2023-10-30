@@ -1,8 +1,10 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.home.home
 
 import android.app.Activity
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -39,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -60,38 +61,46 @@ import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.components.SummaryReportGraph
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.notification.NotificationViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.BlueWhite
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreen
+import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_16
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
-import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
+import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_700_20
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_800_18
 import com.gjglobal.daily_task_entry.presentation.utils.Screen
-import com.gjglobal.daily_task_entry.presentation.utils.currentDate
 import java.io.File
+import java.util.Calendar
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
     navController: NavController,
     activity: Activity,
     dashViewModel: DashboardViewModel,
-    viewModel: HomeScreenViewModel= hiltViewModel()
+    viewModel: HomeScreenViewModel= hiltViewModel(),
+    notificationViewModel:NotificationViewModel = hiltViewModel()
 ) {
-
+    val taskViewModel : TaskAssignViewModel = hiltViewModel()
     val context = LocalContext.current
     val cacheManager = CacheManager(context)
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
     val staffName = userData?.staff_name
     val designation = userData?.designation
+    val currentTime = remember { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
 
-    var offsetX by remember { mutableStateOf(0f) }
+    val offsetX by remember { mutableStateOf(0f) }
     val direction by remember { mutableStateOf(1f) }
     val id = userData?.ImageId
     //Profile image loading url
 
     val url  = Constants.BASE_URL+"/services/image_api.php?id=$id"
     val profileImageUrl by remember { mutableStateOf(url) }
+    var notificationAlert by remember { mutableStateOf(true) }
 
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
@@ -125,9 +134,12 @@ fun HomeScreen(
             }
         }
     }
+
+
+
+    
+    
     val painter = painterResource(id = R.drawable.back_1)
-
-
 
     Box(
         modifier = Modifier
@@ -144,17 +156,72 @@ fun HomeScreen(
 
         Box {
             Column(modifier = Modifier.fillMaxSize()) {
+
+                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_10)))
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(60.dp)
+                        .padding(horizontal = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = currentDate(), style = TextStyle_600_14, color = Gray,modifier = Modifier.padding(horizontal = 20.dp)
-                    )
-                    ImageFromApi(viewModel)
+                    Row {
+//                        Image(
+//                            painter = painterResource(id = R.drawable.profile_icons),
+//                            contentDescription = "doctor image",
+//                            modifier = Modifier.size(dimensionResource(id = R.dimen.dimen_50))
+//                        )
+
+                        ImageFromApi(viewModel)
+
+                        Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_16)))
+                        Column {
+                            Text(
+                                text = when {
+                                    currentTime < 12 -> "Good Morning 👋"
+                                    currentTime < 16 -> "Good Afternoon 👋"
+                                    else -> "Good Evening 👋"
+                                },
+                                style = TextStyle_400_16
+                            )
+                                Text(
+                                    text = userData?.staff_name!!,
+                                    style = TextStyle_700_20
+                                )
+
+                        }
+                    }
+
+                    if(notificationAlert){
+                    Image(
+                        painter = painterResource(id = R.drawable.bell_badge),
+                        contentDescription = "notifications",
+                        modifier = Modifier.clickable{
+                            navController.navigate(Screen.NotificationScreen.route)
+                        }
+                    )}else{
+                        Image(
+                            painter = painterResource(id = R.drawable.notification),
+                            contentDescription = "notifications",
+                            modifier = Modifier.clickable {
+                                navController.navigate(Screen.NotificationScreen.route)
+                            })
+
+                    }
                 }
+                Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_20)))
+//                Row(
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                ) {
+//                    Text(
+//                        text = currentDate(), style = TextStyle_600_14, color = Gray,modifier = Modifier.padding(horizontal = 20.dp)
+//                    )
+//                    ImageFromApi(viewModel)
+//                }
 
                 Text(
                     text = "My Tasks", style = TextStyle_800_18, color = ColorPrimary,modifier = Modifier.padding(horizontal = 20.dp)
@@ -171,6 +238,7 @@ fun HomeScreen(
                             .height(100.dp)
                             .width(100.dp)
                             .clickable {
+                                notificationAlert = true
                                 navController.navigate(Screen.TaskListToDoViewScreen.route)
                             }
                             .weight(1f), // Use weight to distribute available space equally
@@ -240,6 +308,7 @@ fun HomeScreen(
                             .width(100.dp)
                             .weight(1f)
                             .clickable {
+
                                 navController.navigate(Screen.TaskListScreen.route)
                             }, // Use weight to distribute available space equally
                         shape = RoundedCornerShape(10.dp),
@@ -522,10 +591,24 @@ fun HomeScreen(
                         }
                     }
                 }
+
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        modifier = Modifier.align(Alignment.BottomEnd)
+                    ) {
+                        SummaryReportGraph(viewModel=taskViewModel, onClick = {
+                        })
+                    }
+                }
+
             }
         }
     }
 }
+
+
 
 
 @Composable
