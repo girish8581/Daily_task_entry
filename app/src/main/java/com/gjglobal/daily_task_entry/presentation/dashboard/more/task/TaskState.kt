@@ -2,6 +2,7 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.more.task
 
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskCountData
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskJiraEmptyData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskItem
 
@@ -10,6 +11,7 @@ data class TaskState(
     var error: String? = null,
     var taskCreatedList: List<TaskListItem>? = null,
     var newTaskList: List<NewTaskItem>? = null,
+    var emptyJiraList: List<TaskJiraEmptyData>? = null,
     var isTaskList: Boolean? = false,
     var isTaskSaved: Boolean? = false,
     var isStatusUpdated:Boolean? = false,
@@ -19,5 +21,6 @@ data class TaskState(
     var isTaskCountData :Boolean? = false,
     var isTaskCountLoding :Boolean? = false,
     var isAddNewTask:Boolean?=false,
-    var isGetNewTask:Boolean?=false
+    var isGetNewTask:Boolean?=false,
+    var isGiraTaskList:Boolean?=false
 )

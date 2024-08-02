@@ -1,6 +1,10 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.components
 
+import android.annotation.SuppressLint
 import android.app.DatePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
@@ -30,12 +34,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.gjglobal.daily_task_entry.BuildConfig
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.stafftaskdatewise.TaskDataDateWise
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.FormatTime
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.ReportViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.formatTime
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.BgBlur
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
@@ -48,8 +56,14 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_14
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_600_16
+import com.gjglobal.daily_task_entry.presentation.utils.convertDate
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApiReport
+import com.gjglobal.daily_task_entry.presentation.utils.fileTime
 import com.gjglobal.daily_task_entry.presentation.utils.formatDate
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import java.io.File
+import java.io.FileOutputStream
+import java.text.DecimalFormat
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
@@ -60,14 +74,8 @@ import java.util.*
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun EmployeeWiseReport(
-    onClickCancelBtn: (() -> Unit),
+    onClickCancelBtn: (() -> Unit),userRole:String,staffName:String,context: Context
 ) {
-    val context = LocalContext.current
-    val cacheManager = CacheManager(context)
-    val userData = cacheManager.getAuthResponse()?.data?.get(0)
-    val staffName = userData?.staff_name
-    val userRole = userData?.userType
-
     val viewModel: ReportViewModel = hiltViewModel()
     val taskViewModel :TaskAssignViewModel = hiltViewModel()
     val state = viewModel.state.value
@@ -276,7 +284,7 @@ fun EmployeeWiseReport(
 
 
                         Text(
-                            text = staffName!!,
+                            text = staffName,
                             style = TextStyle_400_14
                         )
                         selectedItem = staffName
@@ -387,6 +395,42 @@ fun EmployeeWiseReport(
                             )
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.width(20.dp))
+
+                    Button(
+                        onClick = {
+                            if (selectedItem.isNotEmpty()) {
+
+                                createExcelReport(context = context, reportList = taskState.staffTaskDateWise!!)
+
+                            } else {
+                                Toast.makeText(context, "Please select staff!!", Toast.LENGTH_LONG)
+                                    .show()
+                            }
+
+                        },
+                        colors = ButtonDefaults.buttonColors(ColorPrimary),
+                        modifier = Modifier
+                            .width(100.dp)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        if (taskState.isExporting.not()) {
+                            androidx.compose.material3.Text(
+                                text = "Export",
+                                color = Color.White,
+                                style = TextStyle_500_14
+                            )
+                        }
+                        AnimatedVisibility(visible = taskState.isExporting) {
+                            androidx.compose.material3.CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier
+                                    .size(30.dp)
+                            )
+                        }
+                    }
 
                }
                 Divider(
@@ -486,7 +530,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
 
 
         val timeTaken = viewModel.state.value.staffTaskDateWise
-            ?.map { it.timeTaken }
+            ?.map { formatTimeActual(it.timeTaken.toDouble()) }
             ?.filterNotNull()
             ?: emptyList()
 
@@ -500,7 +544,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
 
         val formattedSum = formatDuration(sumOfTimeTaken)
 
-        println("formatted:$formattedSum")
+        //println("formatted:$formattedSum")
 
         // Function to parse time strings like "06:30" to Duration
 
@@ -509,7 +553,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
             ?.groupBy { it.task_no }
             ?.values
             ?.map { it.last().task_status }
-            ?.count { it == "COMPLETED" } ?: 0
+            ?.count { it == "In QA Testing" } ?: 0
 
         val inProgressCount = viewModel.state.value.staffTaskDateWise
             ?.groupBy { it.task_no }
@@ -531,9 +575,9 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
                 RowWithBorder("Resource Count ",staffList.size.toString())
                 RowWithBorder("Job Done ",taskNameCount.toString())
                 RowWithBorder("Total Tasks ",taskNamesCount.toString())
-                RowWithBorder("Completed Tasks ",completedCount.toString())
+                RowWithBorder("Done Tasks ",completedCount.toString())
                 RowWithBorder("In Progress Tasks ",inProgressCount.toString())
-                RowWithBorder("Time Taken ",formattedSum.toString())
+                RowWithBorder("Time Line ",formattedSum.toString())
 
                 Spacer(modifier = Modifier.height(5.dp))
 
@@ -624,6 +668,7 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
                                         )
                                     }
 
+
                                         Row(
                                             horizontalArrangement = Arrangement.Center,
                                             modifier = Modifier.padding(
@@ -656,38 +701,55 @@ fun ReportDateWiseCard(viewModel: TaskAssignViewModel) {
                                                 color = ColorPrimary,
                                                 modifier = Modifier.width(100.dp)
                                             )
-                                            //Spacer(modifier = Modifier.width(30.dp))
-                                            val startTime = FormatTime(item.start_time)
-                                            val endTime = FormatTime(item.end_time)
-                                            Text(
-                                                text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+ item.timeTaken+" Hrs"}else{""},
-                                                style = TextStyle_500_12,
-                                                color = ColorPrimary
-                                            )
+
+                                            if(item.timeTaken.isNotEmpty()){
+                                                Text(
+                                                    text = if (item.timeTaken.isEmpty()
+                                                            .not()
+                                                    ) {
+                                                        formatTime(item.timeTaken.toDouble())
+                                                    } else {
+                                                        ""
+                                                    },
+                                                    style = TextStyle_500_12,
+                                                    color = ColorPrimary
+                                                )
+                                            }else{
+                                                item.timeTaken.let {
+                                                    Text(
+                                                        text = "$it Hrs",
+                                                        style = TextStyle_500_12,
+                                                        color = ColorPrimary
+                                                    )
+                                                }
+                                            }
+
                                         }
 
-//                                    Row(
-//                                        horizontalArrangement = Arrangement.Center,
-//                                        modifier = Modifier.padding(
-//                                            horizontal = 10.dp,
-//                                        )
-//                                    ) {
-//                                        Text(
-//                                            text = "Level",
-//                                            style = TextStyle_600_12,
-//                                            color = ColorPrimary,
-//                                            modifier = Modifier.width(100.dp)
-//                                        )
-//
-//                                        Text(
-//                                            text = item.,
-//                                            style = TextStyle_500_12,
-//                                            color = if(item.task_status=="IN PROGRESS"){
-//                                                Color.Red}else{
-//                                                DarkGreenColor
-//                                            }
-//                                        )
-//                                    }
+                                    Row(
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(
+                                            horizontal = 10.dp,
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "Level",
+                                            style = TextStyle_600_12,
+                                            color = ColorPrimary,
+                                            modifier = Modifier.width(100.dp)
+                                        )
+
+                                        item.completed_level?.let {
+                                            Text(
+                                                text = "$it%",
+                                                style = TextStyle_500_12,
+                                                color = if(item.task_status=="IN PROGRESS"){
+                                                    Color.Red}else{
+                                                    DarkGreenColor
+                                                }
+                                            )
+                                        }
+                                    }
 
                                         Row(
                                             horizontalArrangement = Arrangement.Center,
@@ -815,16 +877,15 @@ fun WeekStartEndDates() {
     Text("Start of the Week (Sunday): $weekStartDate")
     Text("End of the Week (Saturday): $weekEndDate")
 }
+@SuppressLint("SuspiciousIndentation")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnable:Boolean) {
-    val currentDate = LocalDate.now()
-    val dayOfWeek = currentDate.dayOfWeek.value // 1 for Monday, 7 for Sunday
-    // Calculate the start of the week based on the day of the week
-    val weekStartDate = currentDate.minusDays((dayOfWeek - 1).toLong())
-    // Calculate the end of the week (Saturday)
-    val daysUntilEndOfWeek = DayOfWeek.SATURDAY.value - dayOfWeek
-    val weekEndDate = weekStartDate.plusDays(daysUntilEndOfWeek.toLong())
+
+    val selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val weekStartDate = selectedDate.with(DayOfWeek.MONDAY)
+    val weekEndDate = selectedDate.with(DayOfWeek.SUNDAY)
+
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd") // Format pattern
     val formattedStartDate = weekStartDate.format(dateFormatter)
     val formattedEndDate = weekEndDate.format(dateFormatter)
@@ -839,23 +900,7 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
     val staffName = userData?.staff_name
     val userRole = userData?.userType
 
-    if(userRole == "ADMIN") {
-        viewModel.getStaffTaskDateWise(
-            StaffTaskDateWiseRequest(
-                from_date = weekStartDate.toString(),
-                staff_name = "ALL",
-                to_date = weekEndDate.toString()
-            )
-        )
-    }else{
-        viewModel.getStaffTaskDateWise(
-            StaffTaskDateWiseRequest(
-                from_date = weekStartDate.toString(),
-                staff_name = staffName!!,
-                to_date = weekEndDate.toString()
-            )
-        )
-    }
+
 
     Card(
         modifier = Modifier.padding(all = dimensionResource(id = R.dimen.dimen_10)),
@@ -944,7 +989,7 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
 
 
         val timeTaken = viewModel.state.value.staffTaskDateWise
-            ?.map { it.timeTaken }
+            ?.map { formatTimeActual( it.timeTaken.toDouble()) }
             ?.filterNotNull()
             ?: emptyList()
 
@@ -953,12 +998,12 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
         val sumOfTimeTaken = timeTaken
             .map { parseDuration(it) }
             .reduce { acc, duration -> acc.plus(duration) }
-
-        println("sum:$sumOfTimeTaken")
-
+//
+//        println("sum:$sumOfTimeTaken")
+//
         val formattedSum = formatDuration(sumOfTimeTaken)
 
-        println("formatted:$formattedSum")
+        //println("formatted:$formattedSum")
 
         // Function to parse time strings like "06:30" to Duration
 
@@ -967,7 +1012,7 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
             ?.groupBy { it.task_no }
             ?.values
             ?.map { it.last().task_status }
-            ?.count { it == "COMPLETED" } ?: 0
+            ?.count { it == "In QA Testing" } ?: 0
 
         val inProgressCount = viewModel.state.value.staffTaskDateWise
             ?.groupBy { it.task_no }
@@ -980,6 +1025,8 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
                         .background(Color.Transparent),
                     contentAlignment = Alignment.Center
                 ) {
+
+
 
                     val data = listOf(
                         "Project Count" to projCount,
@@ -1003,6 +1050,12 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
 
                     Column() {
 
+                        Row(horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()){
+                            Text(text = "Start Date:${convertDate(weekStartDate.toString())}",style = TextStyle_500_12, color = GraphColor)
+                            Text(text = "End Date:${convertDate(weekEndDate.toString())}", style = TextStyle_500_12,color = GraphColor)
+                        }
+
                         BarChart(
                             modifier = Modifier.fillMaxWidth(),
                             values = listOf(projCount.toFloat(),taskNameCount.toFloat(), taskNamesCount.toFloat(),
@@ -1012,7 +1065,7 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
                             labels =listOf( "Proj","Job","Task","Done","In prog","Time")
                         )
 
-                        println(convertTimeToFloat(formattedSum))
+                        //println(convertTimeToFloat(formattedSum))
 
                         if(summaryEnable) {
                             Spacer(modifier = Modifier.height(20.dp))
@@ -1022,9 +1075,9 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
                             RowWithBorder("Resource Count ", staffList.size.toString())
                             RowWithBorder("Job Done ", taskNameCount.toString())
                             RowWithBorder("Total Tasks ", taskNamesCount.toString())
-                            RowWithBorder("Completed Tasks ", completedCount.toString())
+                            RowWithBorder("Done Tasks ", completedCount.toString())
                             RowWithBorder("In Progress Tasks ", inProgressCount.toString())
-                            RowWithBorder("Time Taken ", formattedSum.toString())
+                            RowWithBorder("Time Line ", formattedSum.toString())
                             Spacer(modifier = Modifier.height(5.dp))
                         }
                     }
@@ -1037,46 +1090,19 @@ fun SummaryReport(viewModel: TaskAssignViewModel,onClick: () -> Unit,summaryEnab
 }
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
-    val currentDate = LocalDate.now()
-    val dayOfWeek = currentDate.dayOfWeek.value // 1 for Monday, 7 for Sunday
-    // Calculate the start of the week based on the day of the week
-    val weekStartDate = currentDate.minusDays((dayOfWeek - 1).toLong())
-    // Calculate the end of the week (Saturday)
-    val daysUntilEndOfWeek = DayOfWeek.SATURDAY.value - dayOfWeek
-    val weekEndDate = weekStartDate.plusDays(daysUntilEndOfWeek.toLong())
+fun SummaryReportGraph(viewModel: TaskAssignViewModel,
+                       onClick: () -> Unit,userRole:
+                       String,staffName: String,
+                       weekStartDate:String,weekEndDate:String) {
+
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd") // Format pattern
     val formattedStartDate = weekStartDate.format(dateFormatter)
     val formattedEndDate = weekEndDate.format(dateFormatter)
 
-    val context = LocalContext.current
-    val cacheManager = CacheManager(context)
-    val userData = cacheManager.getAuthResponse()?.data?.get(0)
-    val staffName = userData?.staff_name
-    val userRole = userData?.userType
-
-    if(userRole == "ADMIN") {
-        viewModel.getStaffTaskDateWise(
-            StaffTaskDateWiseRequest(
-                from_date = weekStartDate.toString(),
-                staff_name = "ALL",
-                to_date = weekEndDate.toString()
-            )
-        )
-    }else{
-        viewModel.getStaffTaskDateWise(
-            StaffTaskDateWiseRequest(
-                from_date = weekStartDate.toString(),
-                staff_name = staffName!!,
-                to_date = weekEndDate.toString()
-            )
-        )
-    }
-
     Box(){
         Column(
             horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.Bottom,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(5.dp)
@@ -1130,7 +1156,7 @@ fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
 
 
                 val timeTaken = viewModel.state.value.staffTaskDateWise
-                    ?.map { it.timeTaken }
+                    ?.map { formatTimeActual( it.timeTaken.toDouble()) }
                     ?.filterNotNull()
                     ?: emptyList()
 
@@ -1153,7 +1179,7 @@ fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
                     ?.groupBy { it.task_no }
                     ?.values
                     ?.map { it.last().task_status }
-                    ?.count { it == "COMPLETED" } ?: 0
+                    ?.count { it == "In QA Testing" } ?: 0
 
                 val inProgressCount = viewModel.state.value.staffTaskDateWise
                     ?.groupBy { it.task_no }
@@ -1187,7 +1213,7 @@ fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
                             values = listOf(projCount.toFloat(),taskNameCount.toFloat(), taskNamesCount.toFloat(),
                                 completedCount.toFloat(),inProgressCount.toFloat(),
                                 convertTimeToFloat(formattedSum)),
-                            maxHeight = 200.dp,
+                            maxHeight = 100.dp,
                             labels =listOf( "Proj","Job","Task","Done","In prog","Time")
                         )
 
@@ -1199,18 +1225,19 @@ fun SummaryReportGraph(viewModel: TaskAssignViewModel,onClick: () -> Unit,) {
 
 
 }
+
+
 fun convertTimeToFloat(timeString: String): Float {
+    val decimalFormat = DecimalFormat("0.00")
     return try {
-        val parts =
-            timeString.split(":".toRegex()).dropLastWhile { it.isEmpty() }
-                .toTypedArray()
+        val parts = timeString.split(":")
         val hours = parts[0].toInt()
         val minutes = parts[1].toInt()
-        val output =  (hours * 60 + minutes).toFloat()
-        output/60
+        val totalMinutes = hours * 60 + minutes
+        val hoursFloat = totalMinutes / 60.0f
 
+        decimalFormat.format(hoursFloat).toFloat()
     } catch (e: NumberFormatException) {
-        // Handle invalid time format or other exceptions
         e.printStackTrace()
         -1.0f // or any appropriate error value
     } catch (e: ArrayIndexOutOfBoundsException) {
@@ -1218,6 +1245,27 @@ fun convertTimeToFloat(timeString: String): Float {
         -1.0f
     }
 }
+
+
+fun convertTimeToFloat2(timeString: String): Float {
+    return try {
+        val parts = timeString.split(":")
+        val hours = parts[0].toInt()
+        val minutes = parts[1].toInt()
+        val totalMinutes = hours * 60 + minutes
+        val hoursFloat = totalMinutes / 60.0f
+
+        // Format the result to have two decimal points
+        String.format("%.2f", hoursFloat).toFloat()
+    } catch (e: NumberFormatException) {
+        e.printStackTrace()
+        -1.0f // or any appropriate error value
+    } catch (e: ArrayIndexOutOfBoundsException) {
+        e.printStackTrace()
+        -1.0f
+    }
+}
+
 
 @Composable
 fun BarChart2(
@@ -1300,7 +1348,7 @@ fun RowWithBorder(Name:String,Count:String) {
             )
 
             Text(
-                text = if(Name != "Time Taken ") {"$Count Nos."}else{"$Count Hrs."},
+                text = if(Name != "Time Line ") {"$Count Nos."}else{"$Count Hrs."},
                 style = TextStyle_600_16,
                 color = Color.White
             )
@@ -1441,4 +1489,111 @@ private fun RowScope.Bar(
             .background(color)
     )
 
+}
+
+private fun createExcelReport(context: Context, reportList: List<TaskDataDateWise>) {
+    // Create a new Excel workbook
+    val workbook = XSSFWorkbook()
+    // Create a new sheet in the workbook
+    val sheet = workbook.createSheet("WeeklyReport")
+    // Add some data to the sheet
+    val headers = arrayOf("DATE", "EMP NAME","PROJECT","RESOURCE NAME",
+        "JIRA ID", "START","END","TIME (IN HRS)","TASK","JOB DONE","STATUS")
+
+    // Add the headers to the first row
+    val headerRow = sheet.createRow(0)
+    headerRow.heightInPoints = 40f
+    for (i in headers.indices) {
+        val cell = headerRow.createCell(i)
+        cell.setCellValue(headers[i])
+    }
+
+    // Add the data to subsequent rows
+    for (i in reportList.indices) {
+        val dataRow = sheet.createRow(i + 1)
+
+        val taskDate = dataRow.createCell(0)
+        val empNAME = dataRow.createCell(1)
+        val projectName = dataRow.createCell(2)
+        val taskName = dataRow.createCell(3)
+        val jiraID = dataRow.createCell(4)
+        val startTime = dataRow.createCell(5)
+        val endTime = dataRow.createCell(6)
+        val timeLine = dataRow.createCell(7)
+        val task = dataRow.createCell(8)
+        val jobDone = dataRow.createCell(9)
+        val status = dataRow.createCell(10)
+
+
+        taskDate.setCellValue(reportList[i].date)
+        empNAME.setCellValue(reportList[i].staff_name)
+        projectName.setCellValue(reportList[i].project_name)
+        taskName.setCellValue(reportList[i].task_no)
+        jiraID.setCellValue(reportList[i].jira_no)
+        startTime.setCellValue(reportList[i].start_time.toString())
+        endTime.setCellValue(reportList[i].end_time.toString())
+        timeLine.setCellValue(reportList[i].timeTaken.toString())
+        task.setCellValue(reportList[i].task_details)
+        jobDone.setCellValue(reportList[i].job_done)
+        status.setCellValue(reportList[i].task_status)
+
+    }
+
+    // Write the workbook to a file
+    val file = File(context.getExternalFilesDir(null), "WeeklyReport"+ fileTime())
+    val outputStream = FileOutputStream(file)
+    workbook.write(outputStream)
+    outputStream.close()
+
+    // Open the Excel with a Excel viewer app
+    val intent = Intent(Intent.ACTION_VIEW)
+    val photoURI = FileProvider.getUriForFile(
+        Objects.requireNonNull(context),
+        BuildConfig.APPLICATION_ID + context.getString(R.string.provider),
+        file
+    )
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    intent.setDataAndType(photoURI, context.getString(R.string.excel))
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        e.printStackTrace()
+    }
+
+}
+
+data class ReportDailyTaskModel(
+    val date:String, val employeeName:String, val project:String,
+    val taskName:String,
+    val resourceName:String, val jiraId:Double,
+    val startTime:String, val endTime: String?, val timeLine: String?,
+    val task:String,val jobDone:String,val status:String)
+
+//    val headers = arrayOf("DATE", "EMP NAME","PROJECT","RESOURCE NAME",
+//        "JIRA ID", "START","END","TIME (IN HRS)","TASK","JOB DONE","STATUS")
+
+fun formatTime(fractionalHours: Double): String {
+    val hours = fractionalHours.toInt()
+    val minutes = ((fractionalHours - hours) * 60).toInt()
+
+    return if (hours > 0 && minutes > 0) {
+        "$hours hours $minutes minutes"
+    } else if (hours > 0) {
+        "$hours hours"
+    } else {
+        "$minutes minutes"
+    }
+}
+
+fun formatTimeActual(fractionalHours: Double): String {
+    val hours = fractionalHours.toInt()
+    val minutes = ((fractionalHours - hours) * 60).toInt()
+
+    return if (hours > 0 && minutes > 0) {
+        "$hours:$minutes"
+    } else if (hours > 0) {
+        "$hours:00"
+    } else {
+        "00:$minutes"
+    }
 }

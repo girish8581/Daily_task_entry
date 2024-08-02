@@ -21,7 +21,6 @@ import javax.inject.Inject
 class HomeScreenViewModel @Inject constructor(
     private val taskListUseCase: TaskListUseCase
 ) :ViewModel(){
-
     private val _state = mutableStateOf(HomeScreenState())
     val state: State<HomeScreenState> = _state
     val selectedImageUri = mutableStateOf<Uri?>(null)
@@ -98,5 +97,9 @@ class HomeScreenViewModel @Inject constructor(
         }else{
             _state.value = _state.value.copy(profilePic = profilePic)
         }
+    }
+
+    fun setDotIndex (value: Int){
+        _state.value = _state.value.copy(indexDot = value)
     }
 }

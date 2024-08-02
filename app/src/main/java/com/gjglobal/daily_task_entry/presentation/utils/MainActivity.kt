@@ -17,6 +17,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.gjglobal.daily_task_entry.presentation.components.NoInternetScreen
 import com.gjglobal.daily_task_entry.presentation.login.LoginScreen
+import com.gjglobal.daily_task_entry.presentation.reminder.requestDisableBatteryOptimization
+import com.gjglobal.daily_task_entry.presentation.reminder.scheduleDailyReminder
+import com.gjglobal.daily_task_entry.presentation.reminder.scheduleReminder
 import com.gjglobal.daily_task_entry.presentation.splash.SplashScreen
 import com.gjglobal.daily_task_entry.presentation.theme.DailyActivityApplicationTheme
 import com.gjglobal.daily_task_entry.presentation.utils.network.ConnectivityObserver
@@ -76,6 +79,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        //requestDisableBatteryOptimization(this)
+        scheduleReminder(this)
+        //scheduleDailyReminder(this)
     }
 
 }

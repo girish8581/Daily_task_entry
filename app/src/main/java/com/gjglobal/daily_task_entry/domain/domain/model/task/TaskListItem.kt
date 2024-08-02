@@ -20,13 +20,17 @@ data class TaskListItem(
     val completed_level:String,
     val qa_task_no:String,
     val qa_task_status:String,
-    val qa_created_on :String
+    val qa_created_on :String,
+    val qa_staff_name:String? = null,
+    val qa_completed_level:String? = null,
+    val hours:String? = null,
+    val qa_last_update:String? = null
 ){
 
     fun doesMatchSearchQuery(query: String): Boolean {
         val matchingCombinations = listOf(
-            "$staff_name$task_name",
-            "$project_name $task_status"
+            "$task_jira_no$task_name",
+            "$project_name $task_status $task_details"
         )
 
         return matchingCombinations.any {

@@ -7,7 +7,10 @@ data class NewTaskItem(
     val task_estimate_date: String,
     val task_name: String,
     val task_start_date: String,
-    val task_status: String
+    val task_status: String,
+    val project_id:String,
+    val staff_id:String,
+    val staff_name:String?=null
 ){
     fun doesMatchSearchQuery(query: String): Boolean {
         val matchingCombinations = listOf(

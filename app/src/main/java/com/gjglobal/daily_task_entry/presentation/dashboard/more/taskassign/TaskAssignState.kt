@@ -8,9 +8,11 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDetai
 
 data class TaskAssignState(
     var isLoading: Boolean = false,
+    var isExporting: Boolean = false,
     var error: String? = null,
     var taskCreatedList: List<TaskListItem>? = null,
     var staffList: List<StaffData>? = null,
+    var qaStaffList: List<StaffData>? = null,
     var taskList: List<TaskMasterData>? = null,
     var isTaskMapList: Boolean? = false,
     var isTaskMapSaved: Boolean? = false,

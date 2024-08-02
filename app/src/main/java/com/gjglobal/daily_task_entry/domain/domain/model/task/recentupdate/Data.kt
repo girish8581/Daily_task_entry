@@ -16,7 +16,8 @@ data class RecentUpdateItem(
     val timeTaken:String? = null,
     val completed_level:String? = null,
     val jira_no:String? = null,
-    val total_break_hours:String? = null
+    val total_break_hours:String? = null,
+    val worked_hours:String?=null
 ){
     fun doesMatchSearchQuery(query: String): Boolean {
         val matchingCombinations = listOf(

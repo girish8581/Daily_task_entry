@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequestNew
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
@@ -94,6 +95,10 @@ class TaskListViewModel @Inject constructor(
             _taskList.value
         )
 
+    fun setSearchText(newText: String) {
+        _searchText.value = newText
+    }
+
     fun isEditTask(value:Boolean){
         _state.value=_state.value.copy(editData = value)
     }
@@ -144,7 +149,47 @@ class TaskListViewModel @Inject constructor(
             }.launchIn(viewModelScope)
     }
 
-    fun saveTaskStatus(taskStatusRequest: TaskStatusRequest,onSuccess: () -> Unit) {
+
+    fun getTaskListNew(taskListRequest: TaskListRequestNew) {
+        taskListUseCase.getTaskListNew(taskListRequestNew = taskListRequest)
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        if (result.data.toString().isNotEmpty()) {
+                            _state.value = _state.value.copy(isTaskList = true)
+                            _state.value =
+                                _state.value.copy(isLoading = false, taskList = result.data?.data)
+                            _taskList.update {
+                                result.data?.data!!
+                            }
+
+                            Log.e("result", result.data.toString())
+                        } else {
+                            _state.value = _state.value.copy(
+                                isTaskList = false,taskList = null
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(isTaskList = false)
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = result.message ?: "An unexpected error occurred"
+
+                        )
+                    }
+
+                    is Resource.Loading -> {
+                        _state.value = _state.value.copy(isLoading = true)
+                    }
+
+                    else -> {}
+                }
+            }.launchIn(viewModelScope)
+    }
+
+    fun saveTaskStatus(taskStatusRequest: TaskStatusRequest,onSuccess: () -> Unit,onFailed : ()->Unit) {
         taskListUseCase.saveTaskStatus(
             taskStatusRequest
         ).onEach { result ->
@@ -172,6 +217,7 @@ class TaskListViewModel @Inject constructor(
                         isLoading = false,
                         error = result.message ?: "An unexpected error occurred",
                     )
+                    onFailed.invoke()
                 }
 
                 is Resource.Loading -> {
@@ -179,7 +225,9 @@ class TaskListViewModel @Inject constructor(
                     _state.value = _state.value.copy(isLoading = true)
                 }
 
-                else -> {}
+                else -> {
+                    onFailed.invoke()
+                }
             }
         }.launchIn(viewModelScope)
     }
@@ -356,6 +404,8 @@ class TaskListViewModel @Inject constructor(
             }
         }.launchIn(viewModelScope)
     }
+
+
 
 }
 

@@ -23,5 +23,7 @@ data class TaskStatusRequest(
     val work_at: String,
     val id :String,
     val completed_level:String,
-    val break_hours:String
+    val break_hours:String,
+    val qaEmployee:String?=null,
+    val workedHours:String?=null
 )

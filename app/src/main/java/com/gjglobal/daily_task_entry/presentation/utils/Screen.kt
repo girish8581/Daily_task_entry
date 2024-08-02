@@ -18,6 +18,8 @@ sealed class Screen(val route: String) {
     object ReportScreen : Screen("report_screen")
     object ImageUploadScreen : Screen("image_upload_screen")
     object AdminHomeScreen : Screen("Admin_home_screen")
+    object TaskJiraEmptyScreen : Screen("task_jira_empty_screen")
+    object OtherJobScreen : Screen("other_job_screen")
 
 }
 

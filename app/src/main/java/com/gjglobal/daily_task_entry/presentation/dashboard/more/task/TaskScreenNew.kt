@@ -1,13 +1,13 @@
 package com.gjglobal.daily_task_entry.presentation.dashboard.more.task
 
 import ShimmerEffectListView
-import ShimmerItem
-import ShimmerItemNew
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.Context
 import android.util.Log
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -39,8 +39,11 @@ import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,17 +61,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
+import com.gjglobal.daily_task_entry.domain.domain.model.login.LoginData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskItem
 import com.gjglobal.daily_task_entry.presentation.components.Messagebox
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.components.ToolBar
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.sendEmail
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.LightBlue
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
@@ -97,18 +105,28 @@ fun TaskScreen(
     viewModel: TaskViewModel = hiltViewModel(),
 
     ) {
+    val taskAssignViewModel :TaskAssignViewModel =  hiltViewModel()
     val context = LocalContext.current
     val cacheManager = CacheManager(context)
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
     val staffName = userData?.staff_name
     val state = viewModel.state.value
+    val taskAssignState = taskAssignViewModel.state.value
     var addTaskVisible by remember { mutableStateOf(false) }
+    val showConfirmation by remember { mutableStateOf(false) }
+
 
     OnLifeCycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
                 viewModel.getProjects()
-                viewModel.getNewTaskList(staffName = userData?.staff_name!!)
+                taskAssignViewModel.getStaffs()
+
+                if(userData!!.userType =="USER"){
+                    viewModel.getNewTaskList(staffName = userData.staff_name!!)
+                }else{
+                    viewModel.getNewTaskList(staffName = "ALL")
+                }
                 dashViewModel.hideBottomMenu(true)
             }
 
@@ -229,8 +247,6 @@ fun TaskScreen(
                        Box(modifier = Modifier.fillMaxSize()) {
                            Column {
                                //NewlyAddedTasks(viewModel=viewModel)
-
-
                                Spacer(modifier = Modifier.height(15.dp))
                                Card(
                                    modifier = Modifier
@@ -957,7 +973,7 @@ fun TaskScreen(
                                                                        AddNewTaskRequest(
                                                                            task_name = taskName.value,
                                                                            task_no = state.taskCountData?.task_no!!,
-                                                                           task_jira_no = textJiraId.value,
+                                                                           task_jira_no = "nil",
                                                                            project_name = selectedStatus,
                                                                            task_details = textProjectDetails.value,
                                                                            created_on = currentDateApi() + " " + currentTime24(),
@@ -968,16 +984,37 @@ fun TaskScreen(
                                                                            created_by = userData?.staff_name!!
                                                                        )
                                                                        ), onSuccess = {
-                                                                   textJiraId.value = ""
-                                                                   textProjectDetails.value = ""
-                                                                   taskName.value = ""
+
                                                                    showSuccess = true
                                                                    viewModel.getTaskCount(selectedStatus)
                                                                    viewModel.getNewTaskList(staffName = userData.staff_name)
                                                                    // update task no
+                                                                   var mailBody = ""
+                                                                   mailBody = "Hello Admin,\n\nNew Task (${taskName.value}) has been created by $staffName in the project $selectedStatus." +
+                                                                           "please give approval"+
+                                                                           "\n Jira Id :${textJiraId.value}"+
+                                                                           "\n\n\n With Regards"+
+                                                                           "\n TaskEntryApp"
+
+                                                                   println(mailBody)
+                                                                   sendEmail(
+                                                                       subject = "Reg:Task approval request from $staffName - ${taskName.value}",
+                                                                       content = mailBody,
+                                                                       context = context,
+                                                                       toMail = "girish.g@gjglobalsoft.com",
+                                                                       onSuccess = {
+
+                                                                       }
+                                                                   )
+
+                                                                   textJiraId.value = ""
+                                                                   textProjectDetails.value = ""
+                                                                   taskName.value = ""
 
                                                                }
                                                            )
+
+
                                                        }
                                                    }, contentAlignment = Alignment.Center
                                            ) {
@@ -1014,7 +1051,9 @@ fun TaskScreen(
                    }
                }else{
                    if(state.isGetNewTask!!) {
-                       LazyColumnExample(state.newTaskList!!)
+                       LazyColumnExample(state.newTaskList!!, taskAssignViewModel = taskAssignViewModel,
+                           taskViewModel = viewModel,
+                           userData = userData!!, context = context)
                    }else{
                        if(state.isLoading){
                            Row(modifier = Modifier.fillMaxWidth(),
@@ -1023,7 +1062,6 @@ fun TaskScreen(
 
                                ShimmerEffectListView(state.isLoading)
                                //CircularProgressIndicator(modifier = Modifier.padding(vertical = 20.dp))
-
                            }
 
                        }
@@ -1032,7 +1070,9 @@ fun TaskScreen(
 
            }
 
+           if(showConfirmation){
 
+           }
 
            if (showSuccess) {
                Messagebox(onSuccess = {
@@ -1040,12 +1080,6 @@ fun TaskScreen(
                    //onCancelClick.invoke()
                }, message = "New Task added!!")
            }
-//            Surface(modifier = Modifier.padding(24.dp)) {
-//                Text(
-//                    text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
-//                    fontSize = 16.sp,
-//                )
-//            }
         }
     )
 
@@ -1056,22 +1090,270 @@ fun TaskScreen(
     }
 }
 
-
-
-
 @Composable
-fun LazyColumnExample(data:List<NewTaskItem>) {
+fun LazyColumnExample(data:List<NewTaskItem>,taskAssignViewModel: TaskAssignViewModel,taskViewModel:TaskViewModel,userData: LoginData,context: Context) {
+    var showDialog by remember { mutableStateOf(false)}
+    var selectedItem by remember { mutableStateOf<NewTaskItem?>(null) }
+
     LazyColumn {
         items(data) { item ->
-            // This lambda is called for each item in the list
-            // You can define the UI for each item here
-            ItemRow(item)
+            ItemRow(item) {
+                selectedItem = item
+                showDialog = true
+            }
         }
+    }
+
+    if(showDialog){
+        ShowConfirmationDialog(onConfirm = {
+            showDialog = false
+        }, taskAssignViewModel = taskAssignViewModel, viewModel =taskViewModel, item = selectedItem!!,userData = userData , context =context )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ItemRow(data: NewTaskItem) {
+fun ShowConfirmationDialog(onConfirm: () -> Unit,taskAssignViewModel:TaskAssignViewModel,
+                           viewModel:TaskViewModel,
+                           item:NewTaskItem,userData:LoginData,context:Context) {
+    // Use AlertDialog or create a custom dialog
+    var taskTime by remember { mutableStateOf("3") }
+    var jiraNo by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = {
+            onConfirm.invoke()
+        },
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        title = {
+            Text("Confirmation")
+        },
+        text = {
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                backgroundColor = Color.White,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Are you sure you want to approve?")
+                    Text(item.staff_name!!)
+                    Text(item.task_details)
+                    Text(item.task_name)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = taskTime,
+                        onValueChange = {
+                            taskTime = it
+                        },
+                        label = { Text("Enter Task Time") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                    )
+                    OutlinedTextField(
+                        value = jiraNo,
+                        onValueChange = {
+                            jiraNo = it
+                        },
+                        label = { Text("Enter Jira No") },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+                        singleLine = true,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+
+                    if(userData.userType =="ADMIN"){
+
+                        onConfirm.invoke()
+                        taskAssignViewModel.addTaskAssign(
+                            taskMappingRequest = TaskMappingRequest(
+                                assigned_date = currentDateApi(),
+                                project_id = item.project_id,
+                                project_name = item.project_name,
+                                staff_id = item.staff_id,
+                                staff_name = item.staff_name!!,
+                                task_id = item.id,
+                                task_name = item.task_name,
+                                task_status = "TO DO",
+                                updated_date = currentDateApi(),
+                                task_details = item.task_details,
+                                taskTime = taskTime
+                            ), onSuccess = {
+
+                                if (userData.userType == "USER") {
+                                    viewModel.getNewTaskList(staffName = userData.staff_name!!)
+                                } else {
+                                    viewModel.getNewTaskList(staffName = "ALL")
+                                }
+
+                                println("Approved success")
+
+                            }
+                        )
+
+                        val userName = item.staff_name
+                        val listStaff: ArrayList<String> = ArrayList()
+                        taskAssignViewModel.state.value.staffList!!.forEach {
+                            listStaff.add(element = it.staff_name)
+                        }
+
+                        val indexStaff = listStaff.indexOf(userName)
+                        val selectedStaffId = taskAssignViewModel.state.value.staffList!![indexStaff].id.toString()
+                        val staffEmailId = taskAssignViewModel.state.value.staffList!![indexStaff].mobile_number.toString()
+
+                        val mailBody =
+                            "Hello $userName,\nNew task (${item.task_name}) Assigned to you in the project ${item.project_name},\nPlease check the task entryApp immediately." +
+                                    "\n\nTask details : ${item.task_details}  \n\n\nWith Regards,\n\nGirish Kumar G"
+
+                        //SEND MAIL TO EMPLOYEE
+                        if (staffEmailId.isNotEmpty()) {
+                            sendEmail(
+                                subject = "Reg:New Task Assigned ${item.task_name}",
+                                content = mailBody,
+                                context = context,
+                                toMail = staffEmailId,
+                                onSuccess = {
+                                    //isSendMail = true
+                                }
+                            )
+                        }
+
+                    }else{
+                        Toast.makeText(context,"Access Denied!!",Toast.LENGTH_LONG).show()
+                    }
+
+                    // rest of the code remains unchanged
+                }
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = {
+                    onConfirm.invoke()
+                    // Dismiss the dialog or perform any other action
+                }
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ShowConfirmationDialogOld(onConfirm: () -> Unit,taskAssignViewModel:TaskAssignViewModel,
+                           viewModel:TaskViewModel,
+                           item:NewTaskItem,userData:LoginData,context:Context) {
+    // Use AlertDialog or create a custom dialog
+    var taskTime by remember { mutableStateOf("3") }
+    var jiraNo by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = {8
+            onConfirm.invoke()
+        },
+        title = { Text("Confirmation") },
+        text = {
+            Column {
+                Text("Are you sure you want to approve?")
+                Text(item.staff_name!!)
+                Text(item.task_details)
+                Text(item.task_name)
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = taskTime,
+                    onValueChange = {
+                        taskTime = it
+                    },
+                    label = { Text("Enter Task Time") },
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = jiraNo,
+                    onValueChange = {
+                        jiraNo = it
+                    },
+                    label = { Text("Enter Jira No") },
+                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onConfirm.invoke()
+                    taskAssignViewModel.addTaskAssign(
+                        taskMappingRequest = TaskMappingRequest(
+                            assigned_date = currentDateApi(),
+                            project_id = item.project_id,
+                            project_name = item.project_name,
+                            staff_id = item.staff_id,
+                            staff_name = item.staff_name!!,
+                            task_id = item.id,
+                            task_name = item.task_name,
+                            task_status = "TO DO",
+                            updated_date = currentDateApi(),
+                            task_details = item.task_details,
+                            taskTime = taskTime
+                        ), onSuccess = {
+
+                            if(userData!!.userType =="USER"){
+                                viewModel.getNewTaskList(staffName = userData.staff_name!!)
+                            }else{
+                                viewModel.getNewTaskList(staffName = "ALL")
+                            }
+
+                            println("Approved success")
+
+                        }
+                    )
+
+                    val userName = userData.staff_name
+                    val toMail = userData.mobile_number
+                    val mailBody = "Hello $userName,\nNew task (${item.task_name}) Assigned to you in the project ${item.project_name},\nPlease check the task entryApp immediately." +
+                            "\n\nTask details : ${item.task_details}  \n\n\nWith Regards,\n\nGirish Kumar G"
+
+                    //SEND MAIL TO EMPLOYEE
+                    if(toMail.isNotEmpty()) {
+                        sendEmail(
+                            subject = "Reg:New Task Assigned ${item.task_name}",
+                            content = mailBody,
+                            context = context,
+                            toMail = toMail,
+                            onSuccess = {
+                                //isSendMail = true
+                            }
+                        )
+                    }
+                }
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = {
+                    onConfirm.invoke()
+                    // Dismiss the dialog or perform any other action
+                }
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun ItemRow(data: NewTaskItem,onclick: (() -> Unit)) {
     // Define the UI for each item in the list
     // For example, you can create a Text element
     // that displays the item text.
@@ -1085,8 +1367,10 @@ fun ItemRow(data: NewTaskItem) {
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .height(130.dp)
+//                .height(130.dp)
                 .clickable {
+
+                    onclick.invoke()
 
                 }
                 .padding(
@@ -1207,6 +1491,27 @@ fun ItemRow(data: NewTaskItem) {
                             text = "Approval Pending",
                             style = TextStyle_500_12,
                             color = ColorPrimary
+                        )
+                    }
+
+
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                        )
+                    ) {
+                        Text(
+                            text = "Requested By",
+                            style = TextStyle_600_12,
+                            color = ColorPrimary,
+                            modifier = Modifier.width(90.dp)
+                        )
+                        Spacer(modifier = Modifier.width(30.dp))
+                        Text(
+                            text = data.staff_name!!,
+                            style = TextStyle_500_12,
+                            color = Color.Red
                         )
                     }
                 }

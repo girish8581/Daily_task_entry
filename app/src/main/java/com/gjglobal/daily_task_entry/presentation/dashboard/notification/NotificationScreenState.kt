@@ -6,5 +6,10 @@ data class NotificationScreenState(
     var isLoading: Boolean = false,
     var error: String? = null,
     var notificationList: List<NotificationItem>? = null,
-    var isNotificationList: Boolean? = false,
+    var isNotificationList: Boolean = false,
+    var isNewNotification:Boolean?=false,
+    var notificationCount:Int = 0,
+    var readNot:List<ReadNotificationIndexModel>?=null,
+    var prevNotificationCount:Int = 0,
+    var isPushNotification:Int=0,
 )

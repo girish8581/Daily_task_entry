@@ -4,5 +4,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.notification.Notificati
 import javax.inject.Inject
 
 interface NotificationRepository {
-    suspend fun getNotifications(): NotificationResponse
+    suspend fun getNotifications(userName:String): NotificationResponse
+
+    suspend fun getNotificationsAdmin(): NotificationResponse
 }

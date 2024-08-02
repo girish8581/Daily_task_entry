@@ -5,3 +5,10 @@ data class TaskMasterResponse(
     val message: String,
     val status: Int
 )
+
+
+data class TaskJiraEmptyResponse(
+    val `data`: List<TaskJiraEmptyData>,
+    val message: String,
+    val status: Int
+)

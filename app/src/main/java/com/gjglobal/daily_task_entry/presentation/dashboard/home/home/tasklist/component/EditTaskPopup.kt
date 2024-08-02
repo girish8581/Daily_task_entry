@@ -2,10 +2,8 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -70,7 +68,6 @@ import java.util.Date
 
 
 @OptIn(ExperimentalMaterialApi::class)
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EditTask(
     item: RecentUpdateItem,
@@ -104,6 +101,8 @@ fun EditTask(
     var textJobeDone by remember { mutableStateOf("") }
     var selectedBreakHours by remember { mutableStateOf("Select") }
     var expandedBreakHours by remember { mutableStateOf(false) }
+    var selectedTimeTaken by remember { mutableStateOf("Select") }
+    var expandedTimeTaken by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
@@ -126,6 +125,7 @@ fun EditTask(
     textJobeDone = item.job_done!!
     textJiraId.value = item.jira_no!!
     selectedBreakHours = (item.total_break_hours!!.toDouble()/60).toString()
+    selectedTimeTaken = item.timeTaken.toString()
 
     val datePickerDialog = DatePickerDialog(
         context,
@@ -295,91 +295,91 @@ fun EditTask(
 //                    )
 //                }
 //            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Start Time : ", style = TextStyle_400_14,
-                    modifier = Modifier.width(150.dp)
-                )
-                Row(
-                    modifier = Modifier.width(150.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    //selectedFromDate = mTime.value
-                    Box(
-                        modifier = Modifier
-                            .border(
-                                0.5.dp,
-                                color = ColorPrimary,
-                                shape = RoundedCornerShape(4.27.dp)
-
-                            )
-                            .background(Color.White)
-                            .width(100.dp)
-                            .height(30.dp)
-                    ) {
-                        Text(
-                            text = formatTimeToHHmm(startTime.value),
-                            style = TextStyle_400_14,
-                            modifier = Modifier.padding(5.dp)
-                        )
-                    }
-
-                    Image(
-                        painter = painterResource(id = R.drawable.calender_icon),
-                        contentDescription = "calender icon",
-                        modifier = Modifier.clickable {
-                            startTimePickerDialog.show()
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "End Time : ", style = TextStyle_400_14,
-                    modifier = Modifier.width(150.dp)
-                )
-                Row(
-                    modifier = Modifier.width(150.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    //selectedFromDate = mTime.value
-                    Box(
-                        modifier = Modifier
-                            .border(
-                                0.5.dp,
-                                color = ColorPrimary,
-                                shape = RoundedCornerShape(4.27.dp)
-                            )
-                            .background(Color.White)
-                            .width(100.dp)
-                            .height(30.dp)
-                    ) {
-                        Text(
-                            text = formatTimeToHHmm(endTime.value),
-                            style = TextStyle_400_14,
-                            modifier = Modifier.padding(5.dp)
-                        )
-                    }
-
-                    Image(
-                        painter = painterResource(id = R.drawable.calender_icon),
-                        contentDescription = "calender icon",
-                        modifier = Modifier.clickable {
-                            endTimePickerDialog.show()
-                        }
-                    )
-                }
-
-            }
+//            Spacer(modifier = Modifier.height(10.dp))
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Text(
+//                    text = "Start Time : ", style = TextStyle_400_14,
+//                    modifier = Modifier.width(150.dp)
+//                )
+//                Row(
+//                    modifier = Modifier.width(150.dp),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                ) {
+//                    //selectedFromDate = mTime.value
+//                    Box(
+//                        modifier = Modifier
+//                            .border(
+//                                0.5.dp,
+//                                color = ColorPrimary,
+//                                shape = RoundedCornerShape(4.27.dp)
+//
+//                            )
+//                            .background(Color.White)
+//                            .width(100.dp)
+//                            .height(30.dp)
+//                    ) {
+//                        Text(
+//                            text = formatTimeToHHmm(startTime.value),
+//                            style = TextStyle_400_14,
+//                            modifier = Modifier.padding(5.dp)
+//                        )
+//                    }
+//
+//                    Image(
+//                        painter = painterResource(id = R.drawable.calender_icon),
+//                        contentDescription = "calender icon",
+//                        modifier = Modifier.clickable {
+//                            startTimePickerDialog.show()
+//                        }
+//                    )
+//                }
+//            }
+//
+//            Spacer(modifier = Modifier.height(10.dp))
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Text(
+//                    text = "End Time : ", style = TextStyle_400_14,
+//                    modifier = Modifier.width(150.dp)
+//                )
+//                Row(
+//                    modifier = Modifier.width(150.dp),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                ) {
+//                    //selectedFromDate = mTime.value
+//                    Box(
+//                        modifier = Modifier
+//                            .border(
+//                                0.5.dp,
+//                                color = ColorPrimary,
+//                                shape = RoundedCornerShape(4.27.dp)
+//                            )
+//                            .background(Color.White)
+//                            .width(100.dp)
+//                            .height(30.dp)
+//                    ) {
+//                        Text(
+//                            text = formatTimeToHHmm(endTime.value),
+//                            style = TextStyle_400_14,
+//                            modifier = Modifier.padding(5.dp)
+//                        )
+//                    }
+//
+//                    Image(
+//                        painter = painterResource(id = R.drawable.calender_icon),
+//                        contentDescription = "calender icon",
+//                        modifier = Modifier.clickable {
+//                            endTimePickerDialog.show()
+//                        }
+//                    )
+//                }
+//
+//            }
 
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -456,6 +456,82 @@ fun EditTask(
            // Spacer(modifier = Modifier.height(5.dp))
 
             //if(selectedStatus=="IN PROGRESS") {
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Time Taken",
+                    style = TextStyle_400_14,
+                    modifier = Modifier.width(150.dp),
+                    color = Color.Red
+
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+                Box(
+                    modifier = Modifier
+                        .border(
+                            0.5.dp,
+                            color = ColorPrimary,
+                            shape = RoundedCornerShape(4.27.dp)
+                        )
+                        .width(80.dp)
+                        .height(35.dp)
+                ) {
+                    ExposedDropdownMenuBox(
+                        expanded = expandedTimeTaken,
+                        onExpandedChange = {
+                            expandedTimeTaken = !expandedTimeTaken
+                        }) {
+                        ExposedDropdownMenu(expanded = expandedTimeTaken,
+                            onDismissRequest = { expandedTimeTaken = false }) {
+                            listBreakHours.forEach { selectedOption ->
+                                DropdownMenuItem(onClick = {
+                                    selectedTimeTaken = selectedOption
+                                    expandedTimeTaken = false
+                                }) {
+                                    Text(
+                                        text = selectedOption,
+                                        style = TextStyle_400_14,
+                                        fontWeight = if (selectedOption == selectedTimeTaken) FontWeight.Bold else null
+                                    )
+                                }
+                            }
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 15.dp)
+                                .fillMaxSize()
+                                .clickable {
+                                    expandedTimeTaken = true
+                                },
+
+                            ) {
+                            Text(
+                                text = selectedTimeTaken,
+                                color = ColorPrimary,
+                                style = TextStyle_400_12
+                            )
+                            Spacer(modifier = Modifier.height(15.dp))
+                            Image(
+                                painter = painterResource(id = R.drawable.down_arrow),
+                                contentDescription = "down arrow"
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = "Hrs",
+                    style = TextStyle_400_14,
+                )
+            }
 
                 Spacer(modifier = Modifier.height(10.dp))
 

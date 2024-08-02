@@ -9,3 +9,17 @@ data class TaskMasterData(
     val task_start_date: String,
     val task_status: String
 )
+
+
+data class TaskJiraEmptyData(
+    val id: String,
+    val task_jira_no:String,
+    val project_name: String,
+    val task_details: String,
+    val task_estimate_date: String,
+    val task_name: String,
+    val task_start_date: String,
+    val task_status: String,
+    val created_by:String? = null,
+    val jiraProjCode:String?=null
+)

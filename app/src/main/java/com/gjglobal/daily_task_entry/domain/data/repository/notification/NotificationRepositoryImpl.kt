@@ -7,7 +7,11 @@ import javax.inject.Inject
 class NotificationRepositoryImpl@Inject constructor(
     private val api: NotificationApi
 ):NotificationRepository {
-    override suspend fun getNotifications(): NotificationResponse {
-        return api.getNotifications()
+    override suspend fun getNotifications(userName:String): NotificationResponse {
+        return api.getNotifications(userName=userName)
+    }
+
+    override suspend fun getNotificationsAdmin(): NotificationResponse {
+        return api.getNotificationsAdmin()
     }
 }

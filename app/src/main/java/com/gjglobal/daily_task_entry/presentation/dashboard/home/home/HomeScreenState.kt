@@ -9,7 +9,8 @@ data class HomeScreenState(
     var isLoading: Boolean = false,
     var error: String? = null,
     var taskCount: List<TaskSummaryCountData>? = null,
-    var isTaskCount:Boolean?=false,
+    var isTaskCount:Boolean=false,
     var isLoadProfilePicture:Boolean?=false,
-    var profilePic: File?=null
+    var profilePic: File?=null,
+    var indexDot:Int? = 0
 )

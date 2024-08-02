@@ -34,6 +34,8 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -206,8 +208,6 @@ fun TaskScreenOld(
             Box(modifier = Modifier.fillMaxSize()) {
                 Column {
                     //NewlyAddedTasks(viewModel=viewModel)
-
-
 
                     Spacer(modifier = Modifier.height(15.dp))
                     Card(
@@ -992,7 +992,9 @@ fun TaskScreenOld(
                     Spacer(modifier = Modifier.height(15.dp))
 
                     if(state.isGetNewTask!!) {
-                        LazyColumnExample(state.newTaskList!!)
+//                        LazyColumnExample(state.newTaskList!!, onclick = {
+//
+//                        })
                     }else{
                         if(state.isLoading){
                             CircularProgressIndicator(modifier = Modifier.padding(vertical = 150.dp))
@@ -1013,6 +1015,8 @@ fun TaskScreenOld(
     }
 
 }
+
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

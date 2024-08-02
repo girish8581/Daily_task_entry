@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectData
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.staff.StaffData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -289,6 +290,10 @@ class TaskAssignViewModel @Inject constructor(
                 else -> {}
             }
         }.launchIn(viewModelScope)
+    }
+
+    fun setQaStaff (staffList :List<StaffData>){
+        _state.value.copy(qaStaffList = staffList)
     }
 
 

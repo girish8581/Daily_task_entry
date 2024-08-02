@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
@@ -71,6 +72,41 @@ class ReportViewModel@Inject constructor(
 
                     is Resource.Error -> {
                         _state.value = _state.value.copy(isReportList = false)
+                        _state.value = _state.value.copy(
+                            isLoading = false,
+                            error = result.message ?: "An unexpected error occurred"
+
+                        )
+                    }
+
+                    is Resource.Loading -> {
+                        _state.value = _state.value.copy(isLoading = true)
+                    }
+
+                    else -> {}
+                }
+            }.launchIn(viewModelScope)
+    }
+
+    fun getWeeklyReport(staffTaskDateWiseRequest: StaffTaskDateWiseRequest) {
+        taskListUseCase.getWeeklyReport(staffTaskDateWiseRequest = staffTaskDateWiseRequest)
+            .onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        if (result.data.toString().isNotEmpty()) {
+                            _state.value = _state.value.copy(isWeeklyReportList = true)
+                            _state.value =
+                                _state.value.copy(isLoading = false, weeklyReportList = result.data?.data, isWeeklyReportList = true)
+                            Log.e("result", result.data.toString())
+                        } else {
+                            _state.value = _state.value.copy(
+                                isWeeklyReportList = false
+                            )
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(isWeeklyReportList = false)
                         _state.value = _state.value.copy(
                             isLoading = false,
                             error = result.message ?: "An unexpected error occurred"

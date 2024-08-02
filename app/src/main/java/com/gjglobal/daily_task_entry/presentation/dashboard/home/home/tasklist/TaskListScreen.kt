@@ -16,13 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,7 +41,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
 import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
-import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequestNew
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.presentation.components.Messagebox
@@ -52,6 +50,7 @@ import com.gjglobal.daily_task_entry.presentation.components.ToolBar
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.components.TaskCard
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.component.EditTask
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
@@ -65,7 +64,6 @@ import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskListScreen(
     navController: NavController,
@@ -77,11 +75,52 @@ fun TaskListScreen(
     val cacheManager = CacheManager(context)
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
     val staffName = userData?.staff_name
-    var taskListRequest : TaskListRequest?= null
-    taskListRequest = TaskListRequest(staff_name = staffName!!, task_status = "IN PROGRESS")
+    var taskListRequest : TaskListRequestNew?= null
+    val taskAssignViewModel: TaskAssignViewModel= hiltViewModel()
+    val taskAssignViewModelState = taskAssignViewModel.state
+
+
+    if (userData!!.userType != "QA") {
+        if (userData.userType == "ADMIN") {
+            //staffName = "ALL"
+            taskListRequest = staffName?.let {
+                TaskListRequestNew(
+                    staff_name = it,
+                    task_status = "IN PROGRESS",
+                    staff_type = "SW",
+                    project_name = "ALL"
+                )
+            }
+        } else {
+            taskListRequest = staffName?.let {
+                TaskListRequestNew(
+                    staff_name = it,
+                    task_status = "IN PROGRESS",
+                    staff_type = "SW",
+                    project_name = "ALL"
+                )
+            }
+        }
+
+    } else {
+        taskListRequest = staffName?.let {
+            TaskListRequestNew(
+                staff_name = it,
+                task_status = "IN PROGRESS",
+                staff_type = "QA",
+                project_name = "ALL"
+            )
+        }
+    }
+
+
+
+
+    val staffQaList  = cacheManager.getQAStaffData()
+
+    //var staffQaList  = null
     var showSuccess by remember { mutableStateOf(false) }
     var listItem by remember { mutableStateOf<RecentUpdateItem?>(null) }
-
 
 
 
@@ -89,18 +128,28 @@ fun TaskListScreen(
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
 
-                viewModel.getTaskList(
-                    taskListRequest = taskListRequest
-                )
+                taskAssignViewModel.getStaffs()
 
-                viewModel.getRecentUpdates(
+                if (taskListRequest != null) {
+                    viewModel.getTaskListNew(
+                        taskListRequest = taskListRequest
+                    )
+                }
+
+                staffName?.let {
                     RecentUpdateRequest(
-                        staff_name = staffName,
+                        staff_name = it,
                         task_status = "IN PROGRESS",
-                        limit_count = "5",
+                        limit_count = "20",
                         ui_type = "UI"
                     )
-                )
+                }?.let {
+                    viewModel.getRecentUpdates(
+                        it
+                    )
+                }
+
+
 
                 dashViewModel.hideBottomMenu(true)
             }
@@ -114,6 +163,9 @@ fun TaskListScreen(
             }
         }
     }
+
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -131,21 +183,27 @@ fun TaskListScreen(
                             TaskCard( modifier = Modifier,
                                 onClick = {
                                     showSuccess = true
-                                    viewModel.getTaskList(
-                                        taskListRequest = taskListRequest
-                                    )
-                                    viewModel.getRecentUpdates(
+                                    if (taskListRequest != null) {
+                                        viewModel.getTaskListNew(
+                                            taskListRequest = taskListRequest
+                                        )
+                                    }
+                                    staffName?.let {
                                         RecentUpdateRequest(
-                                            staff_name = staffName,
+                                            staff_name = it,
                                             task_status = "IN PROGRESS",
                                             limit_count = "5",
                                             ui_type = "UI"
                                         )
-                                    )
-                                },list = item,
-                                viewModel,buttonEnable = true,
+                                    }?.let {
+                                        viewModel.getRecentUpdates(
+                                            it
+                                        )
+                                    }
+                                }, list = item,
+                                viewModel, buttonEnable = true,
                                 taskStatus = "IN PROGRESS" , onStatusUpdate = {},
-                                qaEnable = false)
+                                qaEnable = false, staffList =staffQaList)
                         }
                         item {
                             InProgressList(viewModel = viewModel, navController = navController)
@@ -166,7 +224,6 @@ fun TaskListScreen(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     InProgressList(viewModel = viewModel,navController=navController)
-
                                     Image(
                                         painter = painterResource(id = R.drawable.no_records_found),
                                         contentDescription = stringResource(id = R.string.no_records_found_txt)
@@ -197,9 +254,11 @@ fun TaskListScreen(
 
     if(showSuccess){
         Messagebox(onSuccess = {
-            viewModel.getTaskList(
-                taskListRequest = taskListRequest
-            )
+            if (taskListRequest != null) {
+                viewModel.getTaskListNew(
+                    taskListRequest = taskListRequest
+                )
+            }
             showSuccess = false
             //onCancelClick.invoke()
         }, message = "Status updated!!" )
@@ -327,6 +386,26 @@ fun InProgressList(viewModel: TaskListViewModel,navController: NavController) {
                                             )
                                         ) {
                                             Text(
+                                                text = "Jira No",
+                                                style = TextStyle_600_12,
+                                                color = ColorPrimary,
+                                                modifier = Modifier.width(70.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(30.dp))
+                                            Text(
+                                                text = item.jira_no!!,
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.Center,
+                                            modifier = Modifier.padding(
+                                                horizontal = 10.dp,
+                                            )
+                                        ) {
+                                            Text(
                                                 text = "Task",
                                                 style = TextStyle_600_12,
                                                 color = ColorPrimary,
@@ -352,25 +431,31 @@ fun InProgressList(viewModel: TaskListViewModel,navController: NavController) {
                                                 color = ColorPrimary,
                                                 modifier = Modifier.width(100.dp)
                                             )
+
+                                           Text(
+                                                text = if(item.timeTaken.isNullOrEmpty().not()){formatTime(item.timeTaken!!.toDouble()).toString()}else{""},
+                                                style = TextStyle_500_12,
+                                                color = ColorPrimary
+                                            )
                                             //Spacer(modifier = Modifier.width(30.dp))
-                                            val startTime = FormatTime(item.start_time!!)
-                                            val endTime = FormatTime(item.end_time!!)
+//                                            val startTime = FormatTime(item.start_time!!)
+//                                            val endTime = FormatTime(item.end_time!!)
 //                                            Text(
 //                                                text = startTime + " to  " + endTime +""+ if(item.timeTaken.isNullOrEmpty().not()){" / "+item.timeTaken!!.toDouble()/60+" Hrs"}else{""},
 //                                                style = TextStyle_500_12,
 //                                                color = ColorPrimary
 //                                            )
 
-                                            Text(
-                                                text = "$startTime to $endTime" +
-                                                        (if (!item.timeTaken.isNullOrEmpty()) {
-                                                            " / " + String.format("%.2f", item.timeTaken.toDouble() / 60) + " Hrs"
-                                                        } else {
-                                                            ""
-                                                        }),
-                                                style = TextStyle_500_12,
-                                                color = ColorPrimary
-                                            )
+//                                            Text(
+//                                                text = "$startTime to $endTime" +
+//                                                        (if (!item.timeTaken.isNullOrEmpty()) {
+//                                                            " / " + String.format("%.2f", item.timeTaken.toDouble() / 60) + " Hrs"
+//                                                        } else {
+//                                                            ""
+//                                                        }),
+//                                                style = TextStyle_500_12,
+//                                                color = ColorPrimary
+//                                            )
                                         }
 
                                         Row(
@@ -522,6 +607,19 @@ fun FormatTime(time :String):String{
         formattedTime.value = "Invalid time"
     }
     return formattedTime.value
+}
+
+fun formatTime(fractionalHours: Double): String {
+    val hours = fractionalHours.toInt()
+    val minutes = ((fractionalHours - hours) * 60).toInt()
+
+    return if (hours > 0 && minutes > 0) {
+        "$hours hours $minutes minutes"
+    } else if (hours > 0) {
+        "$hours hours"
+    } else {
+        "$minutes minutes"
+    }
 }
 
 

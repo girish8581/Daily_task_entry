@@ -14,5 +14,7 @@ data class QaTaskRequest(
     val jiraNo :String,
     val id :String,
     val completedLevel:String,
-    val qaTaskNo:String
+    val qaTaskNo:String,
+    val staff_type:String?=null,
+    val hours:String?=null
 )

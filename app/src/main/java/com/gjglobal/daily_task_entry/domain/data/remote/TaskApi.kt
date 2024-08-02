@@ -1,14 +1,19 @@
 package com.gjglobal.daily_task_entry.domain.data.remote
 
 
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.AddNewOtherJobRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.OtherJobResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.StaffName
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequestNew
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.GetStaffResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.ApiCreateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskCountResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskJiraEmptyResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
@@ -16,6 +21,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.UpdateJiraRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
@@ -26,6 +32,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSumm
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.weeklyreport.WeeklyReportResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
 import retrofit2.http.Body
@@ -44,7 +51,12 @@ interface TaskApi {
         @Body staffName: TaskListRequest
     ): TaskListResponse
 
-    //http://65.1.250.239/services/createTask.php
+
+    @POST("services/getStaffwiseTaskNew.php")
+    suspend fun getTaskListingNew(
+        @Body taskListRequestNew: TaskListRequestNew
+    ): TaskListResponse
+
 
     @POST("services/createQaTask.php")
     suspend fun saveQATaskStatus(@Body qaTaskRequest: QaTaskRequest): TaskStatusResponse
@@ -78,6 +90,9 @@ interface TaskApi {
     suspend fun getTasksProjectName(@Query("project_name") projectName: String): TaskMasterResponse
 
 
+    @GET("services/getTaskJiraEmpty.php")
+    suspend fun getJiraEmptyTaskList(@Query("project_name") projectName: String,@Query("staff_name") staffName: String): TaskJiraEmptyResponse
+
     @GET("services/getTaskMaster.php") // new task list api//
     suspend fun getNewTaskList(@Query("staff_name") staffName: String): NewTaskResponse
 
@@ -103,6 +118,11 @@ interface TaskApi {
         @Body staffTaskDateWiseRequest: StaffTaskDateWiseRequest
     ): StaffTaskDateWiseResponse
 
+    @POST("services/getWeeklyReport.php")
+    suspend fun getWeeklyReport(
+        @Body staffTaskDateWiseRequest: StaffTaskDateWiseRequest
+    ): WeeklyReportResponse
+
     @Multipart
     @POST("services/image_upload_api.php")
     suspend fun uploadImage(
@@ -116,6 +136,16 @@ interface TaskApi {
 
     @PUT("services/editTaskEntry.php")
     suspend fun editDailyTaskEntry(@Body editTaskEntryRequest: EditTaskEntryRequest, @Query("id") id: String): TaskStatusUpdateResponse
+
+    @PUT("services/updateJira.php")
+    suspend fun updateJira(@Body updateJiraRequest: UpdateJiraRequest, @Query("id") id: String): TaskStatusUpdateResponse
+
+
+    @POST("services/AddNewOtherJob.php")
+    suspend fun addNewOtherJob(@Body addNewOtherJobRequest: AddNewOtherJobRequest): ApiCreateResponse
+
+    @GET("services/getOtherJob.php")
+    suspend fun getOtherJob(@Query("staffName") staffName: String): OtherJobResponse
 
 
 }

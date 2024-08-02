@@ -2,14 +2,19 @@ package com.gjglobal.daily_task_entry.domain.domain.use_case
 
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.data.repository.task.TaskRepository
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.AddNewOtherJobRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.OtherJobResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.StaffName
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequestNew
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.GetStaffResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.ApiCreateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskCountResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskJiraEmptyResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
@@ -17,6 +22,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.UpdateJiraRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
@@ -27,6 +33,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSumm
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.weeklyreport.WeeklyReportResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.ResponseBody
@@ -117,12 +124,43 @@ class TaskListUseCase @Inject constructor(
             }
         }
 
+    fun getWeeklyReport(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): Flow<Resource<WeeklyReportResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getWeeklyReport(staffTaskDateWiseRequest= staffTaskDateWiseRequest)
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
 
     fun getNewTaskList(staffName:String):Flow<Resource<NewTaskResponse>?> =
         flow {
             try {
                 emit(Resource.Loading())
                 val apiResponse = repository.getNewTaskList(staffName = staffName )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+
+        }
+
+    fun getJiraEmptyTaskList(projectName:String,staffName: String):Flow<Resource<TaskJiraEmptyResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getJiraEmptyTaskList(projectName = projectName,staffName=staffName)
                 emit(Resource.Success(apiResponse))
             } catch (e: HttpException) {
                 emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
@@ -171,6 +209,23 @@ class TaskListUseCase @Inject constructor(
                 emit(Resource.Loading())
                 val apiResponse = repository.getTaskListing(
                     taskListRequest = taskListRequest
+                )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+    fun getTaskListNew(taskListRequestNew : TaskListRequestNew): Flow<Resource<TaskListResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getTaskListingNew(
+                    taskListRequest = taskListRequestNew
                 )
                 emit(Resource.Success(apiResponse))
             } catch (e: HttpException) {
@@ -364,6 +419,83 @@ class TaskListUseCase @Inject constructor(
             }
         }
 
+
+    fun updateJira(updateJiraRequest: UpdateJiraRequest, id :String): Flow<Resource<TaskStatusUpdateResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.updateJira(updateJiraRequest, id)
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+    fun addNewOtherJob(addNewOtherJobRequest: AddNewOtherJobRequest): Flow<Resource<ApiCreateResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.addNewOtherJob(
+                    addNewOtherJobRequest = addNewOtherJobRequest
+                )
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+
+    fun getOtherJob(staffName: String): Flow<Resource<OtherJobResponse>?> =
+
+        flow {
+            try {
+                emit(Resource.Loading())
+
+                val apiResponse = repository.getOtherJob(staffName = staffName)
+
+                if (apiResponse.status == 200) {
+                    // Check other conditions based on your API response structure
+                    emit(Resource.Success(apiResponse))
+                } else {
+                    emit(Resource.Error("Unexpected status code: ${apiResponse.status}"))
+                }
+            } catch (e: HttpException) {
+                // Handle HTTP-related errors
+                val errorMessage = e.localizedMessage ?: "An unexpected error occurred."
+                emit(Resource.Error(errorMessage))
+            } catch (e: IOException) {
+                // Handle network-related errors
+                emit(Resource.Error("Couldn't reach the server. Check your internet connection."))
+            } catch (e: Exception) {
+                // Handle other unexpected errors
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+
+//        flow {
+//            try {
+//                emit(Resource.Loading())
+//                val apiResponse = repository.getOtherJob(
+//                        staffName =staffName
+//                )
+//                emit(Resource.Success(apiResponse))
+//            } catch (e: HttpException) {
+//                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+//            } catch (e: IOException) {
+//                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+//            } catch (e: Exception) {
+//                emit(Resource.Error("Something went wrong."))
+//            }
+  //     }
 
 
 

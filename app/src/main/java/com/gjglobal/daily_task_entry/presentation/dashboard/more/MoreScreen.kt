@@ -153,6 +153,41 @@ fun MoreScreen(navController: NavController, activity: Activity,viewModel: MoreV
                         .fillMaxWidth()
                         .height(100.dp)
                         .clickable {
+                            navController.navigate(Screen.TaskJiraEmptyScreen.route)
+                        }
+                        .padding(start = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Image(
+                        painterResource(id = R.drawable.assign_task),
+                        contentDescription = "task map icon",
+                    )
+                    Spacer(modifier = Modifier.width(15.dp))
+                    Text(
+                        text = "Update JIRA No", style = TextStyle_400_14
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Image(
+                        painterResource(id = R.drawable.forwardarrow),
+                        modifier = Modifier.padding(end = 20.dp),
+                        contentDescription = "back arrow ",
+                    )
+                }
+
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .clickable {
                             navController.navigate(Screen.ImageUploadScreen.route)
                         }
                         .padding(start = 20.dp),

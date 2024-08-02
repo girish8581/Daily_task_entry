@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
     id 'dagger.hilt.android.plugin'
+
 }
 
 android {
@@ -12,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId "com.gjglobal.daily_task_entry"
-        minSdk 24
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -47,6 +48,7 @@ android {
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += '/META-INF/{NOTICE.md,LICENSE.md}'
         }
     }
 }
@@ -107,5 +109,19 @@ dependencies {
     implementation "com.google.accompanist:accompanist-coil:0.15.0"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0"
 
+    //excel
+    implementation 'org.apache.poi:poi:5.1.0'
+    implementation 'org.apache.poi:poi-ooxml:5.1.0'
 
+    implementation "androidx.work:work-runtime:2.8.1"
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+
+//email
+   // implementation 'com.sun.mail:android-mail:1.6.6'
+    //implementation 'com.sun.mail:android-activation:1.6.6'
+    implementation "com.sun.mail:android-mail:$java_mail_version"
+
+
+    // Add the dependencies for any other desired Firebase products
+    // https://firebase.google.com/docs/android/setup#available-libraries
 }

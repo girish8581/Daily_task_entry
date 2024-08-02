@@ -29,6 +29,18 @@ fun currentDateApi(): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd")
     return sdf.format(Date())
 }
+
+fun convertDate(inputDate: String): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val outputSdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
+    return try {
+        val date = sdf.parse(inputDate)
+        outputSdf.format(date)
+    } catch (e: Exception) {
+        "Invalid Date"
+    }
+}
 @SuppressLint("SimpleDateFormat")
 fun currentDateApiReport(): String {
     val sdf = SimpleDateFormat("yyyy/MM/dd")
@@ -57,6 +69,11 @@ fun currentTime24HHMM(): String {
 @SuppressLint("SimpleDateFormat")
 fun currentTimeHHMM(): String {
     val stf = SimpleDateFormat("hh:mm a", Locale.US)
+    return stf.format(Date())
+}
+@SuppressLint("SimpleDateFormat")
+fun fileTime(): String {
+    val stf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
     return stf.format(Date())
 }
 @SuppressLint("SimpleDateFormat")

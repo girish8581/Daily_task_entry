@@ -7,7 +7,7 @@ data class LoginData(
     val mobile_number: String,
     val password: String,
     val qualification: String,
-    val staff_name: String,
+    val staff_name: String?=null,
     val userType: String,
     val username: String,
     val ImageId:String

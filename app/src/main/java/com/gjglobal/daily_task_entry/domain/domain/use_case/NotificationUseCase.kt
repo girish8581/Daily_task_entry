@@ -13,11 +13,26 @@ class NotificationUseCase @Inject constructor(
     private val repository: NotificationRepository
 )  {
 
-    fun getNotification(): Flow<Resource<NotificationResponse>?> =
+    fun getNotification(userName:String): Flow<Resource<NotificationResponse>?> =
         flow {
             try {
                 emit(Resource.Loading())
-                val apiResponse = repository.getNotifications()
+                val apiResponse = repository.getNotifications(userName = userName)
+                emit(Resource.Success(apiResponse))
+            } catch (e: HttpException) {
+                emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))
+            } catch (e: IOException) {
+                emit(Resource.Error("Couldn't reach server. Check your internet connection."))
+            } catch (e: Exception) {
+                emit(Resource.Error("Something went wrong."))
+            }
+        }
+
+    fun getNotificationAdmin(): Flow<Resource<NotificationResponse>?> =
+        flow {
+            try {
+                emit(Resource.Loading())
+                val apiResponse = repository.getNotificationsAdmin()
                 emit(Resource.Success(apiResponse))
             } catch (e: HttpException) {
                 emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred."))

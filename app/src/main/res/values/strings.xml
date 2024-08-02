@@ -68,4 +68,6 @@
     <string name="sign_in">SIGN IN</string>
     <string name="log_out_success">Logged Out Successfully</string>
     <string name="show_report">Show Report</string>
+    <string name="provider">.provider</string>
+    <string name="excel">application/vnd.ms-excel</string>
 </resources>

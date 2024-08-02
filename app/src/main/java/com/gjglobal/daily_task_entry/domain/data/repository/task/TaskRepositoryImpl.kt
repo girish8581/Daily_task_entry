@@ -2,14 +2,19 @@ package com.gjglobal.daily_task_entry.domain.data.repository.task
 
 
 import com.gjglobal.daily_task_entry.domain.data.remote.TaskApi
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.AddNewOtherJobRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.OtherJobResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.otherjob.StaffName
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.StaffTaskDateWiseRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskListRequestNew
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.staff.GetStaffResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.ApiCreateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskCountResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskJiraEmptyResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMasterResponse
@@ -17,6 +22,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusUpdateResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.UpdateJiraRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdate.RecentUpdateResponse
@@ -27,6 +33,7 @@ import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.TaskSumm
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskcount.taskCountSummaryRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.TaskDataResponse
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskResponse
+import com.gjglobal.daily_task_entry.domain.domain.model.task.weeklyreport.WeeklyReportResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody
@@ -39,6 +46,10 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun getTaskListing(taskListRequest: TaskListRequest): TaskListResponse {
         return api.getTaskListing(staffName = taskListRequest)
+    }
+
+    override suspend fun getTaskListingNew(taskListRequest: TaskListRequestNew): TaskListResponse {
+        return api.getTaskListingNew(taskListRequestNew = taskListRequest)
     }
 
     override suspend fun saveTaskStatus(taskStatusRequest: TaskStatusRequest): TaskStatusResponse {
@@ -68,6 +79,10 @@ class TaskRepositoryImpl @Inject constructor(
         return api.getStaffTaskDateWise(staffTaskDateWiseRequest = staffTaskDateWiseRequest)
     }
 
+    override suspend fun getWeeklyReport(staffTaskDateWiseRequest: StaffTaskDateWiseRequest): WeeklyReportResponse {
+        return api.getWeeklyReport(staffTaskDateWiseRequest=staffTaskDateWiseRequest)
+    }
+
     override suspend fun uploadImage(file: File,user_id:String): String {
         return api.uploadImage(image = MultipartBody.Part.createFormData(name = "image",filename = file.name, body = file.asRequestBody()), user_id = user_id)
     }
@@ -83,6 +98,21 @@ class TaskRepositoryImpl @Inject constructor(
         return api.editDailyTaskEntry(editTaskEntryRequest, id)
     }
 
+    override suspend fun updateJira(
+        updateJiraRequest: UpdateJiraRequest,
+        id: String
+    ): TaskStatusUpdateResponse {
+        return api.updateJira(updateJiraRequest, id)
+    }
+
+    override suspend fun addNewOtherJob(addNewOtherJobRequest: AddNewOtherJobRequest): ApiCreateResponse {
+        return api.addNewOtherJob(addNewOtherJobRequest = addNewOtherJobRequest)
+    }
+
+    override suspend fun getOtherJob(staffName: String): OtherJobResponse {
+        return  api.getOtherJob(staffName = staffName)
+    }
+
 
     override suspend fun getProjects(): ProjectResponse {
         return api.getProjects()
@@ -94,6 +124,10 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun getTasks(): TaskMasterResponse {
         return api.getTasks()
+    }
+
+    override suspend fun getJiraEmptyTaskList(projectName: String,staffName :String): TaskJiraEmptyResponse {
+        return api.getJiraEmptyTaskList(projectName = projectName, staffName = staffName)
     }
 
     override suspend fun getTasksProjectName(project_name: String): TaskMasterResponse {

@@ -15,3 +15,8 @@ data class EditTaskEntryRequest(
     val task_no: String,
     val task_status: String
 )
+
+data class UpdateJiraRequest(
+    val jiraNo :String,
+    val task_name :String
+)

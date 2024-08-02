@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.gjglobal.daily_task_entry.core.Resource
 import com.gjglobal.daily_task_entry.domain.domain.model.project.ProjectData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.AddNewTaskRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.EditTaskEntryRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.task.edittaskentry.UpdateJiraRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.recentupdateqa.RecentUpdateQaItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.taskdata.newtask.NewTaskItem
 import com.gjglobal.daily_task_entry.domain.domain.use_case.TaskListUseCase
@@ -177,6 +179,38 @@ class TaskViewModel @Inject constructor(
 
 
 
+    fun getJiraEmptyTaskList(projectName: String,staffName: String) {
+        taskListUseCase.getJiraEmptyTaskList(projectName=projectName,staffName=staffName
+        ).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    Log.i("status succuss",result.data.toString())
+                    if (result.data != null) {
+                        _state.value =
+                            _state.value.copy(isLoading = false, isGiraTaskList = true, emptyJiraList = result.data.data)
+                    }
+                }
+
+                is Resource.Error -> {
+                    Log.i("status error",result.data.toString())
+                    _state.value = _state.value.copy(
+                        isLoading = false,isGiraTaskList=false,
+                        error = result.message ?: "An unexpected error occurred",
+                    )
+                }
+
+                is Resource.Loading -> {
+                    Log.e("loading", "")
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+
+
 
 
     fun getNewTaskList(staffName:String) {
@@ -209,6 +243,41 @@ class TaskViewModel @Inject constructor(
             }
         }.launchIn(viewModelScope)
     }
+
+
+
+    fun updateJira(updateJiraRequest: UpdateJiraRequest, id :String, onSuccess: () -> Unit) {
+        taskListUseCase.updateJira(
+            updateJiraRequest, id).onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    onSuccess.invoke()
+                    Log.i("status succuss",result.data.toString())
+                    _state.value =
+                        _state.value.copy(isLoading = false, isStatusUpdated = true)
+
+                }
+
+                is Resource.Error -> {
+                    Log.i("status error",result.data.toString())
+                    _state.value = _state.value.copy(
+                        isLoading = false,isStatusUpdated = false,
+                        error = result.message ?: "An unexpected error occurred",
+                    )
+                }
+
+                is Resource.Loading -> {
+                    Log.e("loading", "")
+                    _state.value = _state.value.copy(isLoading = true)
+                }
+
+                else -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+
+
 
 
 

@@ -2,11 +2,9 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.home.components
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.os.Build
 import android.util.Log
 import android.widget.DatePicker
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,13 +54,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gjglobal.daily_task_entry.R
+import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.requestmodel.TaskUpdateRequest
+import com.gjglobal.daily_task_entry.domain.domain.model.staff.StaffData
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskListItem
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskStatusRequest
 import com.gjglobal.daily_task_entry.domain.domain.model.task.qatask.QaTaskRequest
+import com.gjglobal.daily_task_entry.presentation.components.ToastMessage
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListViewModel
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.sendEmail
 import com.gjglobal.daily_task_entry.presentation.theme.ColorPrimary
 import com.gjglobal.daily_task_entry.presentation.theme.DarkGreenColor
+import com.gjglobal.daily_task_entry.presentation.theme.Purple700
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_12
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_400_14
@@ -79,7 +82,6 @@ import com.gjglobal.daily_task_entry.presentation.utils.formatDate
 import java.util.Calendar
 import java.util.Date
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TaskCard(
@@ -90,7 +92,8 @@ fun TaskCard(
     buttonEnable:Boolean,
     taskStatus:String,
     onStatusUpdate: () -> Unit,
-    qaEnable:Boolean
+    qaEnable:Boolean,
+    staffList: List<StaffData>?
 ) {
     val context = LocalContext.current
     val mContext = LocalContext.current
@@ -98,15 +101,25 @@ fun TaskCard(
     val mCalendar = Calendar.getInstance()
     val mHour = mCalendar[Calendar.HOUR_OF_DAY]
     val mMinute = mCalendar[Calendar.MINUTE]
+    val cacheManager = CacheManager(context)
+    val userData = cacheManager.getAuthResponse()?.data?.get(0)
+    val staffEmailId = userData?.mobile_number
+
+    val qaStaffs:ArrayList<String> = ArrayList()
+
+    staffList?.forEach {
+        qaStaffs.add(it.staff_name)
+    }
 
     // Value for storing time as a string
-    val startTime = remember { mutableStateOf("") }
+    var startTime = remember { mutableStateOf("") }
     val endTime = remember { mutableStateOf("") }
     val clickFullDay by remember { mutableStateOf(false) }
     val clickHalfDay by remember { mutableStateOf(false) }
-    val clickCustom by remember { mutableStateOf(true) }
+    val clickCustom by remember { mutableStateOf(false) }
     val clickMorning by remember { mutableStateOf(false) }
     val clickAfterNoon by remember { mutableStateOf(false) }
+    var showToast by remember { mutableStateOf(false) }
     val dayType = remember { mutableStateOf("Hourly") }
     val sessionType = remember { mutableStateOf("nil") }
     val leaveStatus = remember { mutableStateOf(0) }
@@ -116,12 +129,20 @@ fun TaskCard(
     var selectedDate: String = ""
 
     var expandedLevel by remember { mutableStateOf(false) }
+    var selectedLevel by remember { mutableStateOf("Select level") }
+
+    var expandedHours by remember { mutableStateOf(false) }
+    var selectedHours by remember { mutableStateOf("0") }
+
+    var expandedMinutes by remember { mutableStateOf(false) }
+    var selectedMinutes by remember { mutableStateOf("0") }
+
     var cardExpand by remember { mutableStateOf(false) }
     var qaCardExpand by remember { mutableStateOf(false) }
     var clickCount by remember { mutableStateOf(0) }
     var expandedStatus by remember { mutableStateOf(false) }
     var selectedStatus by remember { mutableStateOf("Select status") }
-    var selectedLevel by remember { mutableStateOf("Select level") }
+
     var textJobeDone by remember { mutableStateOf("") }
     var selectedBreakHours by remember { mutableStateOf("Select") }
     var expandedBreakHours by remember { mutableStateOf(false) }
@@ -129,6 +150,9 @@ fun TaskCard(
     var selectedQAStatus by remember { mutableStateOf("Select status") }
     var expandedQAStatus by remember { mutableStateOf(false) }
     var isMoveInProgress by remember { mutableStateOf(false) }
+
+    var selectedQAStaff by remember { mutableStateOf("Select staff") }
+    var expandedQAStaff by remember { mutableStateOf(false) }
 
 
     val listQAStatusItems =
@@ -142,6 +166,12 @@ fun TaskCard(
 
     val listLevelItems =
         ArrayList(listOf("10","20","30","40","50","60","70","80","90","100"))
+
+    val listHourItems =
+        ArrayList(listOf("0","1","2","3","4","5","6","7","8","9","10","11","12"))
+
+    val listMinuteItems =
+        ArrayList(listOf("0","0.25","0.5","0.75"))
 
     val listBreakHours =
         ArrayList(listOf("0","0.25","0.5","1","1.5","2","2.5","3"))
@@ -262,10 +292,10 @@ fun TaskCard(
                         modifier = Modifier
                             .size(dimensionResource(id = R.dimen.dimen_50))
                             .clickable {
-                                if(taskStatus=="IN PROGRESS"){
+                                if (taskStatus == "IN PROGRESS") {
                                     cardExpand = !cardExpand
                                 }
-                                if(taskStatus == "In QA Testing"){
+                                if (taskStatus == "In QA Testing") {
                                     qaCardExpand = !qaCardExpand
                                 }
 
@@ -291,10 +321,50 @@ fun TaskCard(
 
                 }
                 Column(modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.dimen_20))) {
-
-
                     if(taskStatus=="In QA Testing"){
                         //qa task status and number
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "JIRA No",
+                                style = TextStyle_400_14,
+
+                                )
+
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.task_jira_no,
+                                style = TextStyle_600_14,
+                                color = Color.Blue
+                            )
+                        }
+
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "Developer",
+                                style = TextStyle_400_14,
+
+                                )
+
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.staff_name,
+                                style = TextStyle_400_14,
+                                color = Color.Red
+                            )
+
+
+                        }
+
                         Row(
                             modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -333,6 +403,65 @@ fun TaskCard(
                             )
 
 
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            list.qa_staff_name?.let {
+
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "QA Employee",
+                                    style = TextStyle_400_14
+                                )
+
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = it,
+                                    style = TextStyle_600_14,
+                                    color = Purple700
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            list.qa_completed_level?.let {
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "QA Level",
+                                    style = TextStyle_400_14
+                                )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "$it%",
+                                    style = TextStyle_400_14,
+                                    color = Purple700
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            list.hours?.let {
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "Total Hours",
+                                    style = TextStyle_400_14
+                                )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "$it Hrs",
+                                    style = TextStyle_400_14,
+                                    color = Purple700
+                                )
+                            }
                         }
                     }
                     Row(
@@ -388,6 +517,26 @@ fun TaskCard(
 
                     }
 
+                    Row(
+                        modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                            text = "Last Update",
+                            style = TextStyle_400_14
+                        )
+                        list.qa_last_update?.let {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = it,
+                                style = TextStyle_500_14,
+                                color = ColorPrimary
+                            )
+                        }
+
+                    }
+
                     // not required for QA Card
                     if(!qaEnable) {
                         Row(
@@ -396,7 +545,7 @@ fun TaskCard(
                         ) {
                             Text(
                                 modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                                text = "Allotted time",
+                                text = "Devp Allotted time",
                                 style = TextStyle_400_14
                             )
                             Text(
@@ -419,18 +568,77 @@ fun TaskCard(
                             )
                             Text(
                                 modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
-                                text = list.time_taken + " Hours",
+                                text = formatTime(list.time_taken!!.toDouble()),
                                 style = TextStyle_600_14,
-                                color = if ((list.time_taken?.toDouble()
+                                color = if ((list.time_taken.toDouble()
                                         ?: 0.00) > (list.taskTime?.toDouble() ?: 0.00)
                                 ) {
                                     Color.Red
                                 } else {
                                     DarkGreenColor
                                 }
-
                             )
+                        }
 
+                        if(!list.hours.isNullOrBlank()) {
+                            Row(
+                                modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = "Total Time QA",
+                                    style = TextStyle_400_14
+                                )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = list.hours + " Hours",
+                                    style = TextStyle_600_14,
+                                    color = if ((list.hours?.toDouble()
+                                            ?: 0.00) > (list.hours?.toDouble() ?: 0.00)
+                                    ) {
+                                        Color.Red
+                                    } else {
+                                        DarkGreenColor
+                                    }
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "Developer",
+                                style = TextStyle_400_14
+                            )
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = list.staff_name,
+                                style = TextStyle_600_14,
+                                color = DarkGreenColor
+                            )
+                        }
+
+                        list.qa_staff_name?.let {
+                        Row(
+                            modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                text = "QA Tester",
+                                style = TextStyle_400_14
+                            )
+                                Text(
+                                    modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                    text = it,
+                                    style = TextStyle_600_14,
+                                    color = Color.Red
+                                )
+                            }
                         }
 
                         Row(
@@ -459,6 +667,26 @@ fun TaskCard(
                         }
 
                         if(list.qa_task_status != "NA") {
+
+                            list.task_jira_no?.let {
+                                Row(
+                                    modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                        text = "JIRA No",
+                                        style = TextStyle_400_14
+                                    )
+                                    Text(
+                                        modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+                                        text = it,
+                                        style = TextStyle_600_14,
+                                        color = Color.Red
+                                    )
+                                }
+                            }
+
                             Row(
                                 modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -523,6 +751,26 @@ fun TaskCard(
                                         color = ColorPrimary
                                     )
                                 }
+
+//                                Row(
+//                                    modifier.fillMaxWidth(),
+//                                    horizontalArrangement = Arrangement.SpaceBetween
+//                                ) {
+//                                    list.qa_last_update?.let {
+//                                        Text(
+//                                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+//                                            text = "QA Comments",
+//                                            style = TextStyle_400_14
+//                                        )
+//                                        Text(
+//                                            modifier = Modifier.width(dimensionResource(id = R.dimen.dimen_150)),
+//                                            text = it,
+//                                            style = TextStyle_500_14,
+//                                            color = ColorPrimary
+//                                        )
+//                                    }
+//
+//                                }
                             }
 
                             Spacer(modifier = Modifier.height(15.dp))
@@ -531,6 +779,7 @@ fun TaskCard(
                     }
 
                     if (cardExpand) {
+                        clickCount = 0
                         Spacer(modifier = Modifier.height(15.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -641,9 +890,129 @@ fun TaskCard(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-
                             // TO DO Status not required time slot selection//
                             if(selectedStatus!="TO DO") {
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select Worked Hours",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(150.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .width(80.dp)
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedHours,
+                                            onExpandedChange = {
+                                                expandedHours = !expandedHours
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedHours,
+                                                onDismissRequest = { expandedHours = false }) {
+                                                listHourItems.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedHours = selectedOption
+                                                        expandedHours = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedHours) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedHours = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedHours,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedMinutes,
+                                            onExpandedChange = {
+                                                expandedMinutes = !expandedMinutes
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedMinutes,
+                                                onDismissRequest = { expandedMinutes = false }) {
+                                                listMinuteItems.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedMinutes = selectedOption
+                                                        expandedMinutes = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedMinutes) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedMinutes = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedMinutes,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
 
                                 if (clickCustom) {
                                     Row(
@@ -731,82 +1100,84 @@ fun TaskCard(
                                             )
                                         }
                                     }
-                                }
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "Break hours",
-                                        style = TextStyle_400_14,
-                                        modifier = Modifier.width(150.dp),
-                                        color = Color.Red
 
-                                    )
-
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .border(
-                                                0.5.dp,
-                                                color = ColorPrimary,
-                                                shape = RoundedCornerShape(4.27.dp)
-                                            )
-                                            .width(80.dp)
-                                            .height(35.dp)
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        ExposedDropdownMenuBox(
-                                            expanded = expandedBreakHours,
-                                            onExpandedChange = {
-                                                expandedBreakHours = !expandedBreakHours
-                                            }) {
-                                            ExposedDropdownMenu(expanded = expandedBreakHours,
-                                                onDismissRequest = { expandedBreakHours = false }) {
-                                                listBreakHours.forEach { selectedOption ->
-                                                    DropdownMenuItem(onClick = {
-                                                        selectedBreakHours = selectedOption
-                                                        expandedBreakHours = false
-                                                    }) {
-                                                        Text(
-                                                            text = selectedOption,
-                                                            style = TextStyle_400_14,
-                                                            fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
-                                                        )
+                                        Text(
+                                            text = "Break hours",
+                                            style = TextStyle_400_14,
+                                            modifier = Modifier.width(150.dp),
+                                            color = Color.Red
+
+                                        )
+
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .border(
+                                                    0.5.dp,
+                                                    color = ColorPrimary,
+                                                    shape = RoundedCornerShape(4.27.dp)
+                                                )
+                                                .width(80.dp)
+                                                .height(35.dp)
+                                        ) {
+                                            ExposedDropdownMenuBox(
+                                                expanded = expandedBreakHours,
+                                                onExpandedChange = {
+                                                    expandedBreakHours = !expandedBreakHours
+                                                }) {
+                                                ExposedDropdownMenu(expanded = expandedBreakHours,
+                                                    onDismissRequest = { expandedBreakHours = false }) {
+                                                    listBreakHours.forEach { selectedOption ->
+                                                        DropdownMenuItem(onClick = {
+                                                            selectedBreakHours = selectedOption
+                                                            expandedBreakHours = false
+                                                        }) {
+                                                            Text(
+                                                                text = selectedOption,
+                                                                style = TextStyle_400_14,
+                                                                fontWeight = if (selectedOption == selectedBreakHours) FontWeight.Bold else null
+                                                            )
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            Row(
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .padding(start = 8.dp, end = 15.dp)
-                                                    .fillMaxSize()
-                                                    .clickable {
-                                                        expandedBreakHours = true
-                                                    },
+                                                Row(
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier
+                                                        .padding(start = 8.dp, end = 15.dp)
+                                                        .fillMaxSize()
+                                                        .clickable {
+                                                            expandedBreakHours = true
+                                                        },
 
-                                                ) {
-                                                Text(
-                                                    text = selectedBreakHours,
-                                                    color = ColorPrimary,
-                                                    style = TextStyle_400_12
-                                                )
-                                                Spacer(modifier = Modifier.height(15.dp))
-                                                Image(
-                                                    painter = painterResource(id = R.drawable.down_arrow),
-                                                    contentDescription = "down arrow"
-                                                )
+                                                    ) {
+                                                    Text(
+                                                        text = selectedBreakHours,
+                                                        color = ColorPrimary,
+                                                        style = TextStyle_400_12
+                                                    )
+                                                    Spacer(modifier = Modifier.height(15.dp))
+                                                    Image(
+                                                        painter = painterResource(id = R.drawable.down_arrow),
+                                                        contentDescription = "down arrow"
+                                                    )
+                                                }
                                             }
                                         }
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Text(
+                                            text = "Hrs",
+                                            style = TextStyle_400_14,
+                                        )
                                     }
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    Text(
-                                        text = "Hrs",
-                                        style = TextStyle_400_14,
-                                    )
                                 }
-                            }
+                                }
+
 
                             Spacer(modifier = Modifier.height(10.dp))
 
@@ -866,6 +1237,72 @@ fun TaskCard(
                                                 ) {
                                                 Text(
                                                     text = selectedQAStatus,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select QA Employee:",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(100.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedQAStaff,
+                                            onExpandedChange = {
+                                                expandedQAStaff = !expandedQAStaff
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedQAStaff,
+                                                onDismissRequest = { expandedQAStaff = false }) {
+                                                qaStaffs.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedQAStaff = selectedOption
+                                                        expandedQAStaff = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedQAStaff) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedQAStaff = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedQAStaff,
                                                     color = ColorPrimary,
                                                     style = TextStyle_400_12
                                                 )
@@ -998,6 +1435,7 @@ fun TaskCard(
                         }
                     }
                     if(qaCardExpand){
+                        clickCount = 0
                         Spacer(modifier = Modifier.height(15.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -1109,6 +1547,76 @@ fun TaskCard(
                                 }
                             }
 
+                            Spacer(modifier = Modifier.height(10.dp))
+                            if(userData!!.userType != "QA" || list.qa_staff_name.isNullOrBlank()){
+                                println("usertypeLogin ${userData.userType}")
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Select QA Employee:",
+                                        style = TextStyle_400_14,
+                                        modifier = Modifier.width(100.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .border(
+                                                0.5.dp,
+                                                color = ColorPrimary,
+                                                shape = RoundedCornerShape(4.27.dp)
+                                            )
+                                            .fillMaxWidth()
+                                            .height(35.dp)
+                                    ) {
+                                        ExposedDropdownMenuBox(
+                                            expanded = expandedQAStaff,
+                                            onExpandedChange = {
+                                                expandedQAStaff = !expandedQAStaff
+                                            }) {
+                                            ExposedDropdownMenu(expanded = expandedQAStaff,
+                                                onDismissRequest = { expandedQAStaff = false }) {
+                                                qaStaffs.forEach { selectedOption ->
+                                                    DropdownMenuItem(onClick = {
+                                                        selectedQAStaff = selectedOption
+                                                        expandedQAStaff = false
+                                                    }) {
+                                                        Text(
+                                                            text = selectedOption,
+                                                            style = TextStyle_400_12,
+                                                            fontWeight = if (selectedOption == selectedQAStaff) FontWeight.Bold else null
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .padding(start = 8.dp, end = 15.dp)
+                                                    .fillMaxSize()
+                                                    .clickable {
+                                                        expandedQAStaff = true
+                                                    },
+
+                                                ) {
+                                                Text(
+                                                    text = selectedQAStaff,
+                                                    color = ColorPrimary,
+                                                    style = TextStyle_400_12
+                                                )
+                                                Spacer(modifier = Modifier.height(15.dp))
+                                                Image(
+                                                    painter = painterResource(id = R.drawable.down_arrow),
+                                                    contentDescription = "down arrow"
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             if(selectedQAStatus=="QA Testing Progress" || (selectedQAStatus=="QA Testing Failed")) {
 
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -1175,6 +1683,129 @@ fun TaskCard(
                                                     contentDescription = "down arrow"
                                                 )
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Select Worked Hours",
+                                    style = TextStyle_400_14,
+                                    modifier = Modifier.width(150.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .border(
+                                            0.5.dp,
+                                            color = ColorPrimary,
+                                            shape = RoundedCornerShape(4.27.dp)
+                                        )
+                                        .width(80.dp)
+                                        .height(35.dp)
+                                ) {
+                                    ExposedDropdownMenuBox(
+                                        expanded = expandedHours,
+                                        onExpandedChange = {
+                                            expandedHours = !expandedHours
+                                        }) {
+                                        ExposedDropdownMenu(expanded = expandedHours,
+                                            onDismissRequest = { expandedHours = false }) {
+                                            listHourItems.forEach { selectedOption ->
+                                                DropdownMenuItem(onClick = {
+                                                    selectedHours = selectedOption
+                                                    expandedHours = false
+                                                }) {
+                                                    Text(
+                                                        text = selectedOption,
+                                                        style = TextStyle_400_12,
+                                                        fontWeight = if (selectedOption == selectedHours) FontWeight.Bold else null
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .padding(start = 8.dp, end = 15.dp)
+                                                .fillMaxSize()
+                                                .clickable {
+                                                    expandedHours = true
+                                                },
+
+                                            ) {
+                                            Text(
+                                                text = selectedHours,
+                                                color = ColorPrimary,
+                                                style = TextStyle_400_12
+                                            )
+                                            Spacer(modifier = Modifier.height(15.dp))
+                                            Image(
+                                                painter = painterResource(id = R.drawable.down_arrow),
+                                                contentDescription = "down arrow"
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .border(
+                                            0.5.dp,
+                                            color = ColorPrimary,
+                                            shape = RoundedCornerShape(4.27.dp)
+                                        )
+                                        .fillMaxWidth()
+                                        .height(35.dp)
+                                ) {
+                                    ExposedDropdownMenuBox(
+                                        expanded = expandedMinutes,
+                                        onExpandedChange = {
+                                            expandedMinutes = !expandedMinutes
+                                        }) {
+                                        ExposedDropdownMenu(expanded = expandedMinutes,
+                                            onDismissRequest = { expandedMinutes = false }) {
+                                            listMinuteItems.forEach { selectedOption ->
+                                                DropdownMenuItem(onClick = {
+                                                    selectedMinutes = selectedOption
+                                                    expandedMinutes = false
+                                                }) {
+                                                    Text(
+                                                        text = selectedOption,
+                                                        style = TextStyle_400_12,
+                                                        fontWeight = if (selectedOption == selectedMinutes) FontWeight.Bold else null
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .padding(start = 8.dp, end = 15.dp)
+                                                .fillMaxSize()
+                                                .clickable {
+                                                    expandedMinutes = true
+                                                },
+
+                                            ) {
+                                            Text(
+                                                text = selectedMinutes,
+                                                color = ColorPrimary,
+                                                style = TextStyle_400_12
+                                            )
+                                            Spacer(modifier = Modifier.height(15.dp))
+                                            Image(
+                                                painter = painterResource(id = R.drawable.down_arrow),
+                                                contentDescription = "down arrow"
+                                            )
                                         }
                                     }
                                 }
@@ -1268,7 +1899,7 @@ fun TaskCard(
                     }
                 }
 
-                if(qaEnable){
+                if(qaEnable && list.qa_staff_name.isNullOrBlank() || (userData!!.userType == "QA" && taskStatus != "COMPLETED")){
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -1280,47 +1911,140 @@ fun TaskCard(
                                 .fillMaxWidth()
                                 .height(dimensionResource(id = R.dimen.dimen_50))
                                 .clickable {
-                                    qaCardExpand = true
                                     clickCount++
-                                    if (textJobeDone != ""
-                                        && selectedQAStatus != ""
-                                        && selectedLevel != "Select level"
-                                    ) {
-                                        viewModel.saveQaTaskStatus(
-                                            QaTaskRequest(
-                                                createdBy = list.staff_id,
-                                                createdOn = currentDateApi() + " " + currentTime24(),
-                                                date = selectedDate,
-                                                jiraNo = list.task_jira_no,
-                                                jobDone = textJobeDone,
-                                                projectName = list.project_name,
-                                                staffName = list.staff_name,
-                                                taskDetails = list.task_details,
-                                                taskNo = list.task_name,
-                                                taskStatus ="In QA Testing",
-                                                id = list.id,
-                                                completedLevel = selectedLevel,
-                                                qaTaskStatus = selectedQAStatus,
-                                                qaTaskNo = list.qa_task_no
-                                        ), onSuccess = {
+
+                                    if (clickCount == 1) {
+
+                                        if (selectedHours.isEmpty() || selectedHours == "Select Hours") {
+                                            selectedHours = "0"
+                                        }
+                                        qaCardExpand = true
+                                        if (textJobeDone != ""
+                                            && selectedQAStatus != ""
+                                            && selectedLevel != "Select level"
+                                        ) {
+                                            var staffName = ""
+
+                                            staffName = selectedQAStaff
+
+                                            staffName =
+                                                if (userData?.userType != "QA" && list.qa_staff_name.isNullOrBlank()) {
+                                                    selectedQAStaff
+                                                } else if (userData?.userType != "QA" && selectedQAStaff.isEmpty()) {
+                                                    list.staff_name.toString()
+                                                } else if (selectedQAStaff.isEmpty() || selectedQAStaff == "Select staff") {
+                                                    list.qa_staff_name.toString()
+                                                } else {
+                                                    selectedQAStaff
+                                                }
+
+//                                        if (staffName == "Select staff" || staffName == "") {
+//                                            staffName = list.staff_name.toString()
+//                                        }
+
+                                            val timeTaken = (selectedHours.toDouble() + selectedMinutes.toDouble())
+
+                                            viewModel.saveQaTaskStatus(
+                                                QaTaskRequest(
+                                                    createdBy = list.staff_id,
+                                                    createdOn = currentDateApi() + " " + currentTime24(),
+                                                    date = selectedDate,
+                                                    jiraNo = list.task_jira_no,
+                                                    jobDone = textJobeDone,
+                                                    projectName = list.project_name,
+                                                    staffName = staffName,
+                                                    taskDetails = list.task_details,
+                                                    taskNo = list.task_name,
+                                                    taskStatus = "In QA Testing",
+                                                    id = list.id,
+                                                    completedLevel = selectedLevel,
+                                                    qaTaskStatus = selectedQAStatus,
+                                                    qaTaskNo = list.qa_task_no,
+                                                    staff_type = userData?.userType,
+                                                    hours = (selectedHours.toDouble() + selectedMinutes.toDouble()).toString()
+                                                ), onSuccess = {
+                                                    clickCount = 0
+                                                    viewModel.state.value.taskList = null
+                                                    onStatusUpdate.invoke()
+                                                    qaCardExpand = false
+
+                                                    var mailBody = ""
+                                                    if (userData != null) {
+                                                        if (userData.userType == "ADMIN") {
+                                                            mailBody =
+                                                                "Hello Girish,\n\nTask (${list.task_name}) has been updated by ${list.qa_staff_name} in the project ${list.project_name}." +
+                                                                        "\n\n Task Details :${list.task_details} \n\n QA Remarks : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                        "\n Assigned Date : ${list.assigned_date}" +
+                                                                        "\n Updated Date : $selectedDate" +
+                                                                        "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                        "\n Level : $selectedLevel" +
+                                                                        "\n Task Status : $selectedQAStatus" +
+                                                                        "\n\n\n With Regards" +
+                                                                        "\n TaskEntryApp"
+                                                        } else {
+                                                            mailBody =
+                                                                "Hello ${list.staff_name},\n\nTask (${list.task_name}) has been updated in the project ${list.project_name}." +
+                                                                        "\n\n Task Details :${list.task_details} \n\n QA Remarks : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                        "\n Assigned Date : ${list.assigned_date}" +
+                                                                        "\n Updated Date : $selectedDate" +
+                                                                        "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                        "\n Level : $selectedLevel" +
+                                                                        "\n Task Status : $selectedQAStatus" +
+                                                                        "\n\n\n With Regards" +
+                                                                        "\n ${list.qa_staff_name}" +
+                                                                        "\n\n\n *Mail sent through task Entry app*"
+                                                        }
+                                                    }
+
+                                                    val developer = list.staff_name
+                                                    var staffListt = ArrayList<StaffData>()
+                                                    staffListt =
+                                                        cacheManager.getStaffData() as ArrayList<StaffData>
+                                                    val staff = ArrayList<String>()
+                                                    staffListt.forEach {
+                                                        staff.add(it.staff_name)
+                                                    }
+                                                    val indexStaff = staff.indexOf(developer)
+                                                    val developerEmailId =
+                                                        staffListt[indexStaff].mobile_number
+                                                    val toMailId = "$staffEmailId,$developerEmailId"
+
+
+                                                    //SEND MAIL TO EMPLOYEE
+                                                    if (staffEmailId!!.isNotEmpty()) {
+                                                        var fromName = ""
+                                                        if (list.qa_staff_name.isNullOrBlank()) {
+                                                            fromName = list.staff_name
+                                                        }
+                                                        println(mailBody)
+                                                        sendEmail(
+                                                            subject = "Reg:Task updated-JIRA No ${list.task_jira_no}-$selectedQAStatus by $fromName",
+                                                            content = mailBody,
+                                                            context = context,
+                                                            toMail = toMailId,
+                                                            onSuccess = {
+                                                                //isSendMail = true
+                                                            }
+                                                        )
+                                                    }
+
+
+                                                }
+                                            )
+                                        } else {
+                                            println("card-expand $qaCardExpand")
+
+                                            if (clickCount != 1) {
+                                                Toast
+                                                    .makeText(
+                                                        context,
+                                                        "Please fill all data correctly!!",
+                                                        Toast.LENGTH_LONG
+                                                    )
+                                                    .show()
                                                 clickCount = 0
-                                                viewModel.state.value.taskList = null
-                                                onStatusUpdate.invoke()
-                                                qaCardExpand = false
                                             }
-                                        )
 
-                                    } else {
-                                        println("card-expand $qaCardExpand")
-
-                                        if (clickCount != 1) {
-                                            Toast
-                                                .makeText(
-                                                    context,
-                                                    "Please fill all data correctly!!",
-                                                    Toast.LENGTH_LONG
-                                                )
-                                                .show()
                                         }
 
                                     }
@@ -1365,60 +2089,195 @@ fun TaskCard(
                                 .clickable {
                                     cardExpand = true
                                     clickCount++
-                                    if (textJobeDone != ""
-                                        && startTime.value.isNotEmpty()
-                                        && endTime.value.isNotEmpty()
-                                        && selectedLevel.isNotEmpty()
-                                        && selectedStatus != "Select status"
-                                        && selectedBreakHours != "Select"
-                                        && startTime.value != endTime.value
-                                    ) {
+                                    startTime.value = "10:00:00"
+                                    endTime.value = "11:00:00"
+                                    selectedBreakHours = "0"
+                                    val timeTaken = (selectedHours.toDouble() + selectedMinutes.toDouble())
 
-                                        viewModel.saveTaskStatus(
-                                            taskStatusRequest = TaskStatusRequest(
-                                                assigned_date = list.assigned_date,
-                                                created_by = list.staff_id,
-                                                created_on = currentDateApi() + " " + currentTime24(),
-                                                date = selectedDate.toString(),
-                                                day_type = dayType.value,
-                                                end_time = endTime.value,
-                                                jira_no = list.task_jira_no,
-                                                job_done = textJobeDone,
-                                                leave_details = leaveDetails.value,
-                                                leave_status = leaveStatus.value,
-                                                project_name = list.project_name,
-                                                project_status = list.project_status,
-                                                remarks_any = remarksAny.value,
-                                                session_type = sessionType.value,
-                                                staff_name = list.staff_name,
-                                                start_time = startTime.value,
-                                                task_details = list.task_details,
-                                                task_no = list.task_name,
-                                                task_status = selectedStatus,
-                                                work_at = workAt.value,
-                                                id = list.id,
-                                                completed_level = selectedLevel,
-                                                break_hours = (selectedBreakHours.toDouble() * 60).toString()
-                                            ), onSuccess = {
-                                                clickCount = 0
-                                                viewModel.state.value.taskList = null
-                                                onClick.invoke()
-                                                cardExpand = false
-                                            }
-                                        )
-                                    } else {
-                                        println("card-expand $cardExpand")
+                                    // developer entry in progress //
+                                    if (clickCount == 1) {
+                                        if (textJobeDone != ""
+                                            && startTime.value.isNotEmpty()
+                                            && endTime.value.isNotEmpty()
+                                            && selectedLevel.isNotEmpty()
+                                            && selectedStatus != "Select status"
+                                            && startTime.value != endTime.value
+                                        ) {
+                                            if (selectedStatus != "In QA Testing") {
+                                                viewModel.saveTaskStatus(
+                                                    taskStatusRequest = TaskStatusRequest(
+                                                        assigned_date = list.assigned_date,
+                                                        created_by = list.staff_id,
+                                                        created_on = currentDateApi() + " " + currentTime24(),
+                                                        date = selectedDate.toString(),
+                                                        day_type = dayType.value,
+                                                        end_time = endTime.value,
+                                                        jira_no = list.task_jira_no,
+                                                        job_done = textJobeDone,
+                                                        leave_details = leaveDetails.value,
+                                                        leave_status = leaveStatus.value,
+                                                        project_name = list.project_name,
+                                                        project_status = list.project_status,
+                                                        remarks_any = remarksAny.value,
+                                                        session_type = sessionType.value,
+                                                        staff_name = list.staff_name,
+                                                        start_time = startTime.value,
+                                                        task_details = list.task_details,
+                                                        task_no = list.task_name,
+                                                        task_status = selectedStatus,
+                                                        work_at = workAt.value,
+                                                        id = list.id,
+                                                        completed_level = selectedLevel,
+                                                        break_hours = (selectedBreakHours.toDouble() * 60).toString(),
+                                                        qaEmployee = "NIL",
+                                                        workedHours = (selectedHours.toDouble() + selectedMinutes.toDouble()).toString()
+                                                    ), onSuccess = {
+                                                        clickCount = 0
+                                                        viewModel.state.value.taskList = null
+                                                        onClick.invoke()
+                                                        cardExpand = false
 
-                                        if (clickCount != 1) {
-                                            Toast
-                                                .makeText(
-                                                    context,
-                                                    "Please fill all data correctly!!",
-                                                    Toast.LENGTH_LONG
+                                                        var mailBody = ""
+                                                        if (userData != null) {
+                                                            if (userData.userType == "ADMIN") {
+                                                                mailBody =
+                                                                    "Hello Admin,\n\nTask (${list.task_name}) has been updated by ${list.staff_name} in the project ${list.project_name}." +
+                                                                            "\n\n Task Details :${list.task_details} \n\n Job done : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                            "\n Assigned Date : ${list.assigned_date}" +
+                                                                            "\n Updated Date : $selectedDate" +
+                                                                            "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                            "\n Task Status : $selectedStatus" +
+                                                                            "\n\n\n With Regards" +
+                                                                            "\n TaskEntryApp"
+                                                            } else {
+                                                                mailBody =
+                                                                    "Hello Admin,\n\nTask (${list.task_name}) has been updated in the project ${list.project_name}." +
+                                                                            "\n\n Task Details :${list.task_details} \n\n Job done : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                            "\n Assigned Date : ${list.assigned_date}" +
+                                                                            "\n Updated Date : $selectedDate" +
+                                                                            "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                            "\n Task Status : $selectedStatus" +
+                                                                            "\n\n\n With Regards" +
+                                                                            "\n ${list.staff_name}" +
+                                                                            "\n\n\n Through task Entry app"
+                                                            }
+                                                        }
+                                                        if (staffEmailId!!.isNotEmpty()) {
+                                                            println(mailBody)
+                                                            sendEmail(
+                                                                subject = "Reg:Task updated- ${list.task_name} by ${list.staff_name}",
+                                                                content = mailBody,
+                                                                context = context,
+                                                                toMail = staffEmailId,
+                                                                onSuccess = {
+                                                                    //isSendMail = true
+                                                                }
+                                                            )
+                                                        }
+                                                    },
+                                                    onFailed = {
+                                                        showToast = true
+                                                        clickCount = 0
+                                                    }
                                                 )
-                                                .show()
-                                        }
 
+                                            } else {
+                                                // developer entry in QA Testing with qa staff selection
+                                                if (selectedQAStaff.isNotEmpty() && selectedQAStaff != "Select staff") {
+                                                    viewModel.saveTaskStatus(
+                                                        taskStatusRequest = TaskStatusRequest(
+                                                            assigned_date = list.assigned_date,
+                                                            created_by = list.staff_id,
+                                                            created_on = currentDateApi() + " " + currentTime24(),
+                                                            date = selectedDate.toString(),
+                                                            day_type = dayType.value,
+                                                            end_time = endTime.value,
+                                                            jira_no = list.task_jira_no,
+                                                            job_done = textJobeDone,
+                                                            leave_details = leaveDetails.value,
+                                                            leave_status = leaveStatus.value,
+                                                            project_name = list.project_name,
+                                                            project_status = list.project_status,
+                                                            remarks_any = remarksAny.value,
+                                                            session_type = sessionType.value,
+                                                            staff_name = list.staff_name,
+                                                            start_time = startTime.value,
+                                                            task_details = list.task_details,
+                                                            task_no = list.task_name,
+                                                            task_status = selectedStatus,
+                                                            work_at = workAt.value,
+                                                            id = list.id,
+                                                            completed_level = selectedLevel,
+                                                            break_hours = (selectedBreakHours.toDouble() * 60).toString(),
+                                                            qaEmployee = selectedQAStaff,
+                                                            workedHours = timeTaken.toString()
+                                                        ), onSuccess = {
+                                                            clickCount = 0
+                                                            viewModel.state.value.taskList = null
+                                                            onClick.invoke()
+                                                            cardExpand = false
+
+                                                            var mailBody = ""
+                                                            if (userData != null) {
+                                                                if (userData.userType == "ADMIN") {
+                                                                    mailBody =
+                                                                        "Hello Admin,\n\nTask (${list.task_name}) has been updated by ${list.staff_name} in the project ${list.project_name}." +
+                                                                                "\n\n Task Details :${list.task_details} \n\n Job done : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                                "\n Assigned Date : ${list.assigned_date}" +
+                                                                                "\n Updated Date : $selectedDate" +
+                                                                                "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                                "\n Task Status : $selectedStatus" +
+                                                                                "\n\n\n With Regards" +
+                                                                                "\n TaskEntryApp"
+                                                                } else {
+                                                                    mailBody =
+                                                                        "Hello Admin,\n\nTask (${list.task_name}) has been updated in the project ${list.project_name}." +
+                                                                                "\n\n Task Details :${list.task_details} \n\n Job done : $textJobeDone \n\n Jira id :${list.task_jira_no}" +
+                                                                                "\n Assigned Date : ${list.assigned_date}" +
+                                                                                "\n Updated Date : $selectedDate" +
+                                                                                "\n Spend Time : ${formatTime(timeTaken)}" +
+                                                                                "\n Task Status : $selectedStatus" +
+                                                                                "\n\n\n With Regards" +
+                                                                                "\n ${list.staff_name}" +
+                                                                                "\n\n\n Through task Entry app"
+                                                                }
+                                                            }
+                                                            if (staffEmailId!!.isNotEmpty()) {
+                                                                println(mailBody)
+                                                                sendEmail(
+                                                                    subject = "Reg:Task updated- ${list.task_name} by ${list.staff_name}",
+                                                                    content = mailBody,
+                                                                    context = context,
+                                                                    toMail = staffEmailId,
+                                                                    onSuccess = {
+                                                                        //isSendMail = true
+                                                                    }
+                                                                )
+                                                            }
+
+                                                        }, onFailed = {
+                                                            showToast = true
+                                                            clickCount = 0
+                                                        }
+                                                    )
+
+
+                                                }
+                                            }
+                                        } else {
+                                            println("card-expand $cardExpand")
+                                            if (clickCount != 1) {
+                                                Toast
+                                                    .makeText(
+                                                        context,
+                                                        "Please fill all data correctly!!",
+                                                        Toast.LENGTH_LONG
+                                                    )
+                                                    .show()
+                                                clickCount = 0
+                                            }
+
+                                        }
                                     }
 
                                 }, contentAlignment = Alignment.Center
@@ -1448,7 +2307,6 @@ fun TaskCard(
                 }
 
             }
-
         }
         Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.dimen_20)))
 
@@ -1527,6 +2385,12 @@ fun TaskCard(
     if (clickCustom) {
         dayType.value = "Hourly"
     }
+
+    if(showToast){
+        clickCount = 0
+        ToastMessage(context = context, message = "Saving error!!")
+        showToast = false
+    }
 }
 
 @Composable
@@ -1569,6 +2433,19 @@ fun ConfirmAlertDialog(
                 }
             }
         )
+    }
+}
+
+fun formatTime(fractionalHours: Double): String {
+    val hours = fractionalHours.toInt()
+    val minutes = ((fractionalHours - hours) * 60).toInt()
+
+    return if (hours > 0 && minutes > 0) {
+        "$hours hours $minutes minutes"
+    } else if (hours > 0) {
+        "$hours hours"
+    } else {
+        "$minutes minutes"
     }
 }
 

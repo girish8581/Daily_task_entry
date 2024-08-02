@@ -2,6 +2,7 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign
 
 import android.app.Activity
 import android.app.DatePickerDialog
+import android.content.Context
 import android.util.Log
 import android.widget.DatePicker
 import android.widget.Toast
@@ -54,6 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.gjglobal.daily_task_entry.R
+import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.task.TaskMappingRequest
 import com.gjglobal.daily_task_entry.presentation.components.Messagebox
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
@@ -66,8 +68,20 @@ import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_16
 import com.gjglobal.daily_task_entry.presentation.theme.lightestBlue
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApi
 import com.gjglobal.daily_task_entry.presentation.utils.currentDateApiReport
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
+import java.util.Properties
+import javax.mail.Authenticator
+import javax.mail.Message
+import javax.mail.MessagingException
+import javax.mail.PasswordAuthentication
+import javax.mail.Session
+import javax.mail.Transport
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeMessage
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -85,6 +99,9 @@ fun TaskAssignScreen(
 
     val taskState = taskViewModel.state.value
     val state = viewModel.state.value
+
+    val cacheManager = CacheManager(context)
+    val userData = cacheManager.getAuthResponse()?.data?.get(0)
 
     var showSuccess by remember { mutableStateOf(false) }
 
@@ -106,6 +123,16 @@ fun TaskAssignScreen(
     }
 
     var selectedTaskStatus by remember {
+        mutableStateOf("")
+    }
+
+
+    var staffEmailId by remember {
+        mutableStateOf("")
+    }
+
+
+    var staffUserName by remember {
         mutableStateOf("")
     }
 
@@ -156,6 +183,15 @@ fun TaskAssignScreen(
     var expandedVehicle by remember {
         mutableStateOf(false)
     }
+
+    var isSendMail by remember {
+        mutableStateOf(false)
+    }
+
+    val to by remember { mutableStateOf("girish.g@gjglobalsoft.com") }
+    val subject by remember { mutableStateOf("Subject") }
+    val message by remember { mutableStateOf("Hello, this is the email from task entry") }
+
 
     OnLifeCycleEvent { _, event ->
         when (event) {
@@ -238,7 +274,8 @@ fun TaskAssignScreen(
                 ) {
                     Column(
 
-                        modifier = Modifier.background(lightestBlue)
+                        modifier = Modifier
+                            .background(lightestBlue)
                             .padding(10.dp)
                     ) {
                         Row(
@@ -275,6 +312,9 @@ fun TaskAssignScreen(
                                                     indexStaff = listStaff.indexOf(selectedStaff)
                                                     selectedStaffId =
                                                         state.staffList?.get(indexStaff)?.id.toString()
+
+                                                    staffEmailId = state.staffList?.get(indexStaff)?.mobile_number.toString()
+                                                    staffUserName = state.staffList?.get(indexStaff)?.username.toString()
 
                                                     println("$selectedStaff $selectedStaffId")
 
@@ -489,7 +529,8 @@ fun TaskAssignScreen(
 
                             Text(
                                 text = selectedTaskDetails,
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier
+                                    .fillMaxWidth()
                                     .fillMaxWidth(1.0f)
 
                             )
@@ -559,6 +600,19 @@ fun TaskAssignScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
                         ) {
+//                            Button(onClick = {
+//                                sendEmail(
+//                                    subject = "New Task Assigned",
+//                                    content = "Hello Sarath,\nNew task Assigned to you,Please check the task entryApp.\n\nGirish Kumar",
+//                                    context = context,
+//                                    toMail = "girish.g@gjglobalsoft.com",
+//                                    onSuccess = {
+//                                        isSendMail = true
+//                                    }
+//                                )
+//                            }) {
+//
+//                            }
 
                             Button(
                                 onClick = {
@@ -591,6 +645,24 @@ fun TaskAssignScreen(
                                                 viewModel.isValidTaskTime("0")
                                             }
                                         )
+
+                                        val userName = staffUserName
+                                        val toMail = staffEmailId
+                                        val mailBody = "Hello $userName,\nNew task ($selectedTask) Assigned to you in the project $selectedProject,\nPlease check the task entryApp immediately." +
+                                                "\n\nTask details : $selectedTaskDetails  \n\n\nWith Regards,\n\nGirish Kumar G"
+
+                                        //SEND MAIL TO EMPLOYEE
+                                        if(staffEmailId.isNotEmpty()) {
+                                            sendEmail(
+                                                subject = "Reg:New Task Assigned $selectedTask",
+                                                content = mailBody,
+                                                context = context,
+                                                toMail = toMail,
+                                                onSuccess = {
+                                                    //isSendMail = true
+                                                }
+                                            )
+                                        }
 
                                     } else {
                                         Toast.makeText(
@@ -635,14 +707,86 @@ fun TaskAssignScreen(
             }
         }
     }
-            if (showSuccess) {
-                Messagebox(onSuccess = {
-                    showSuccess = false
-                    //onCancelClick.invoke()
-                }, message = "New Task assigned!!")
-            }
+    if (showSuccess) {
+        Messagebox(onSuccess = {
+            showSuccess = false
+            //onCancelClick.invoke()
+        }, message = "New Task assigned!!")
+    }
+    if (isSendMail) {
+        Messagebox(onSuccess = {
+            showSuccess = false
+            //onCancelClick.invoke()
+        }, message = "Mail sent!!")
+    }
 
-    if(state.isAlreadyAssigned!!){
-        Toast.makeText(context,"Task already assigned!!",Toast.LENGTH_LONG).show()
+    if (state.isAlreadyAssigned!!) {
+        Toast.makeText(context, "Task already assigned!!", Toast.LENGTH_LONG).show()
+    }
+}
+
+fun sendEmail(
+    subject: String,
+    content: String,
+    toMail:String,
+    context: Context,
+    onSuccess: () -> Unit
+) {
+    // Create a CoroutineScope using the IO dispatcher to perform IO operations to prevent UI blocking ANRs
+    CoroutineScope(Dispatchers.IO).launch {
+        // SMTP server details
+        val host = "smtp.gmail.com"
+        val port = 587
+        val username = "girish.g@gjglobalsoft.com"
+        val password = "tqeslznfiasiopxx" // user the apps password not your real gmail password
+
+        // Email recipient
+        val from = "girish.g@gjglobalsoft.com"
+
+        // Configure SMTP properties
+        val props = Properties()
+        props["mail.smtp.auth"] = "true"
+        props["mail.smtp.starttls.enable"] = "true"
+        props["mail.smtp.host"] = host
+        props["mail.smtp.port"] = port
+
+        // Create a session with authentication
+        val session = Session.getInstance(props, object : Authenticator() {
+            override fun getPasswordAuthentication(): PasswordAuthentication {
+                return PasswordAuthentication(username, password)
+            }
+        })
+
+        try {
+            // Create a new MimeMessage
+            val message = MimeMessage(session)
+            message.setFrom(InternetAddress(username))
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toMail))
+            message.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(from))
+            message.subject = subject
+           // message.setText(from + "\n" + content)
+
+            message.setText(content)
+
+            // Send the message using the Transport class
+            Transport.send(message)
+
+            // Perform UI operations on the Main dispatcher
+            CoroutineScope(Dispatchers.Main).launch {
+                // Display a success toast message
+                Toast.makeText(context, "Sent Successfully.", Toast.LENGTH_LONG).show()
+
+                // Invoke the onSuccess callback function
+                onSuccess.invoke()
+            }
+        } catch (e: MessagingException) {
+            e.printStackTrace()
+
+            // Perform UI operations on the Main dispatcher
+            CoroutineScope(Dispatchers.Main).launch {
+                // Display an error toast message
+                Toast.makeText(context, "Problem exists: $e", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }

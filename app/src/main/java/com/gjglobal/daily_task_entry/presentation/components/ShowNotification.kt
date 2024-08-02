@@ -23,7 +23,7 @@ fun showNotification(context: Context, message: String) {
             context,
             0,
             notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
         notificationBuilder.setContentIntent(pendingIntent)
 

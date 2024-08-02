@@ -33,7 +33,9 @@ import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.HomeScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.tasklist.TaskListScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.home.taskview.TaskListViewScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.home.leave.LeaveScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.home.otherjobs.OtherJobsScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.MoreScreen
+import com.gjglobal.daily_task_entry.presentation.dashboard.more.jiraempty.TaskJiraEmptyScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.reports.ReportScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.task.TaskScreen
 import com.gjglobal.daily_task_entry.presentation.dashboard.more.taskassign.TaskAssignScreen
@@ -190,6 +192,18 @@ fun Navigation(
             route = Screen.ImageUploadScreen.route
         ) {
             ImageUploadScreen(navController = navController,viewModel = viewModel,activity = activity )
+        }
+
+        composable(
+            route = Screen.TaskJiraEmptyScreen.route
+        ) {
+            TaskJiraEmptyScreen(navController = navController,dashViewModel = viewModel,activity = activity )
+        }
+
+        composable(
+            route = Screen.OtherJobScreen.route
+        ) {
+            OtherJobsScreen(navController = navController,activity = activity, dashViewModel = viewModel)
         }
      }
 }

@@ -3,14 +3,18 @@ package com.gjglobal.daily_task_entry.presentation.dashboard.notification
 import ShimmerEffectListView
 import android.app.Activity
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,7 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,11 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -47,17 +47,13 @@ import com.gjglobal.daily_task_entry.domain.data.cache.CacheManager
 import com.gjglobal.daily_task_entry.domain.domain.model.notification.NotificationItem
 import com.gjglobal.daily_task_entry.presentation.components.OnLifeCycleEvent
 import com.gjglobal.daily_task_entry.presentation.components.ToolBar
-import com.gjglobal.daily_task_entry.presentation.components.showNotification
 import com.gjglobal.daily_task_entry.presentation.dashboard.DashboardViewModel
 import com.gjglobal.daily_task_entry.presentation.theme.BlueRms
 import com.gjglobal.daily_task_entry.presentation.theme.TextColor
-import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_10
 import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_12
-import com.gjglobal.daily_task_entry.presentation.theme.TextStyle_500_14
+import com.gjglobal.daily_task_entry.presentation.utils.Screen
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
@@ -68,20 +64,22 @@ fun NotificationScreen(navController: NavController,
                        dashViewModel: DashboardViewModel,
                        viewModel: NotificationViewModel = hiltViewModel()
 ) {
-
     val context = LocalContext.current
     val cacheManager = CacheManager(context)
     val userData = cacheManager.getAuthResponse()?.data?.get(0)
-
-
-
+    val userName = userData?.staff_name
+    val state = viewModel.state.value
     OnLifeCycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_CREATE -> {
 
                 if(userData?.userType=="ADMIN"){
-                    viewModel.getNotification()
+                    viewModel.getNotificationAdmin()
+                }else{
+                    viewModel.getNotification(userName!!)
                 }
+
+                viewModel.updatePrevCount(cacheManager=cacheManager)
 
                 dashViewModel.hideBottomMenu(true)
             }
@@ -107,7 +105,7 @@ fun NotificationScreen(navController: NavController,
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            if(viewModel.state.value.isNotificationList!!){
+            if(viewModel.state.value.isNotificationList){
                 val items = viewModel.state.value.notificationList
                 LazyColumn(
                     modifier = Modifier
@@ -124,7 +122,10 @@ fun NotificationScreen(navController: NavController,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             item {
-                                NotificationCard(items=items,item=item)
+                                NotificationCard(items=items,
+                                    item=item,
+                                    viewModel=viewModel,
+                                    cacheManager=cacheManager)
                             }
 
                         }
@@ -140,11 +141,12 @@ fun NotificationScreen(navController: NavController,
 }
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NotificationCard(items:List<NotificationItem>, item:Int){
+fun NotificationCard(items:List<NotificationItem>, item:Int,viewModel: NotificationViewModel,cacheManager: CacheManager){
     val maxLength = 40
     var notificationMore by remember { mutableStateOf(false) }
     var msg by remember { mutableStateOf("") }
 
+    val notificationReadStatus = viewModel.checkReadNotificationIndex(notificationIndex = items[item].id.toInt(),cacheManager=cacheManager)
 
     val message = items[item].message
     //showNotification(context = LocalContext.current,message)
@@ -152,131 +154,92 @@ fun NotificationCard(items:List<NotificationItem>, item:Int){
     val nameShort = nameInitials(items[item].userName)
 
 
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-            vertical = dimensionResource(id = R.dimen.dimen_10),
-            horizontal = dimensionResource(id = R.dimen.dimen_20)
-        ),
-        shape = RoundedCornerShape(dimensionResource(id = R.dimen.dimen_20)),
-        elevation = 5.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
-        ) {
 
+   Card(
+        modifier = Modifier.fillMaxWidth()
+            .padding(
+                vertical = dimensionResource(id = R.dimen.dimen_10),
+                horizontal = dimensionResource(id = R.dimen.dimen_20)
+            )
+            .clickable {
+                if (!(viewModel.checkReadNotificationIndex(
+                        notificationIndex = items[item].id.toInt(),
+                        cacheManager = cacheManager
+                    ))
+                ) {
+                    viewModel.saveNotificationReadStatus(
+                        notificationIndex = items[item].id.toInt(),
+                        cacheManager = cacheManager
+                    )
+                    viewModel.updateReadStatus()
+                }
+                Log.e("read list", viewModel.state.value.readNot.toString())
+            },
+        shape = RoundedCornerShape(dimensionResource(id = R.dimen.dimen_20)),
+        elevation = 5.dp
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+                .background(if (notificationReadStatus) {
+                    Color.White
+                } else {
+                    Color.LightGray
+                }),
+            //horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Row(
-                modifier = Modifier.
-                fillMaxWidth()
-                    .padding(start=10.dp,end=10.dp),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 5.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Create a separate Row for the Image and position it at the top
+                if(!notificationReadStatus){
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Transparent), // Make the background transparent
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.successtickred),
+                            contentDescription = "notifications",
+                            modifier = Modifier.clickable {
+
+                            }
+                                .size(20.dp)
+                        )
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .padding(all = dimensionResource(id = R.dimen.dimen_10))
                         .size(dimensionResource(id = R.dimen.dimen_50))
-                        .background(BlueRms, CircleShape),
+                        .background(if (notificationReadStatus) {
+                            Color.LightGray
+                        } else {
+                            BlueRms
+                        }, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(nameShort, color = Color.White)
                 }
-//
-//                val truncatedMessage = if (message.length > maxLength) {
-//                    message.take(maxLength) + "..." // Truncate the string if it's longer than maxLength
-//                } else {
-//                    message
-//                }
-//
-//                msg = truncatedMessage
-//
-////        val annotatedString = buildAnnotatedString {
-////            withStyle(style = SpanStyle(color = TextColor)) {
-////                append(truncatedMessage)
-////            }
-////            withStyle(
-////                style = SpanStyle(
-////                    color = BlueRms,
-////                    textDecoration = TextDecoration.Underline
-////                )
-////            ) {
-////                append(" More")
-////            }
-////        }
-////        Text(
-////            text = annotatedString,
-////            style = TextStyle_400_16,
-////            modifier = Modifier.padding(top = 10.dp)
-////                .width(150.dp)
-////        )
-//
-//
-////            val message = items[item].message
-////            val moreText = " More"
-////
-//                // Combine the message and "More" text with different styles
-//                val annotatedString = buildAnnotatedString {
-//                    withStyle(style = SpanStyle(color = TextColor)) {
-//                        append(msg)
-//                    }
-//                    pushStringAnnotation(tag = "More", annotation = moreText)
-//                    withStyle(
-//                        style = SpanStyle(
-//                            color = BlueRms,
-//                            textDecoration = TextDecoration.Underline
-//                        )
-//                    ) {
-//                        append(moreText)
-//                    }
-//                    pop()
-//                }
-//
-//                ClickableText(
-//                    text = annotatedString,
-//                    onClick = { offset ->
-//                        val annotation = annotatedString.getStringAnnotations(
-//                            tag = "More",
-//                            start = offset,
-//                            end = offset
-//                        ).firstOrNull()
-//
-//                        if (annotation != null) {
-//                            moreText = if(notificationMore){
-//                                " View More"
-//                            }else {
-//                                " View Less"
-//
-//                            }
-//
-//                            msg = if(notificationMore){
-//                                ""
-//                            }else {
-//                                ""
-//
-//                            }
-//                            notificationMore = !notificationMore
-//                            // Handle the "More" click action here
-//                            // You can show a dialog or navigate to a different screen, for example.
-//                        }
-//                    },
-//                    style = TextStyle_500_12,
-//                    modifier = Modifier.padding(top = 10.dp)
-//                )
-
                 if (!notificationMore) {
                     Text(
-                        text = items[item].message, color = TextColor,
+                        text = items[item].message, color = if (notificationReadStatus) {
+                            Color.DarkGray
+                        } else {
+                            TextColor
+                        },
                         overflow = TextOverflow.Ellipsis,
                         softWrap = true,
                         style = TextStyle_500_12,
                         modifier = Modifier.width(250.dp)
-                            .padding(start = 10.dp,top=10.dp)
+                            .padding(start = 10.dp, top = 10.dp)
                     )
                 }
-}
-
+            }
             TimeDifferenceComposable(items[item].created_on)
-
             Spacer(modifier = Modifier.height(10.dp))
         }
     }
